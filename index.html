@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/jquery-2.1.4.min.js"></script>
+    <script src="index.js"></script>
+    <link href='https://fonts.googleapis.com/css?family=Merriweather' rel='stylesheet' type='text/css'>
+    <link href='index.css' rel='stylesheet' type='text/css'>
+    <title>Testing Grounds</title>
+    <link rel="icon" href="http://i.imgur.com/6gT3pP9.png">
+</head>
+<body>
+    <div id='inputcontainer'>
+        <form name="login" method='POST' action="" id="loginform">
+            <input id='username' placeholder='Username' type='text' name='username'>
+            <input id='password' placeholder='Password' type='password' name='password'>
+            <input type='button' name="submit" value='Login!' id='send' onclick="loginindex();" disabled>
+            <h5 id='error'></h5>
+        </form>
+    </div>
+</body>
+</html>
