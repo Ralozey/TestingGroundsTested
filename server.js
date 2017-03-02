@@ -1,4 +1,6 @@
-﻿var http = require('http');
+﻿"use strict";
+
+var http = require('http');
 var url = require('url');
 var fs = require('fs');
 var IP_USER = new Array;
