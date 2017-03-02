@@ -1,5 +1,5 @@
 {
-  "name": "Testing Grounds",
+  "name": "testinggrounds",
   "start": "node server.js",
   "version": "1.0.0",
   "engines" : {
