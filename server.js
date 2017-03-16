@@ -5,10 +5,12 @@ var url = require('url');
 var fs = require('fs');
 var IP_USER = new Array;
 var userlist = new Array;
-var express = require('express');
-var session = require('express-session');
+var gameserverlist = new Array;
+//var express = require('express');
+//var session = require('express-session');
 var Server = require('socket.io');
 var request = require('request');
+var MOD_LIST = ['Ralozey'];
 var io = new Server(http, { pingInterval: 5000, pingTimeout: 10000 });
 
 var headers = {
@@ -19,8 +21,15 @@ var headers = {
 //Enums
 var Type = {
     LOGINDEX: 0,
-    LOGOUT: 1
+    LOGOUT: 1,
+    GAMEINFO: 2,
+    JOINGAME: 3,
+    JOINPLAY: 4
 };
+
+var PhaseType = {
+    LOBBY: 0
+}
 
 function getIp(socket) {
     return (socket.handshake.headers['x-forwarded-for'] || socket.handshake.address.address || '::1');
@@ -29,8 +38,46 @@ function getIpReq(req) {
     return (req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress || req.connection.socket.remoteAddress);
 }
 function createUser(USERNAME) {
-    userlist[USERNAME] = new User('INDEX');
+    if (MOD_LIST.indexOf(USERNAME) == -1) {
+        userlist[USERNAME] = new User('INDEX', false);
+    }
+    else {
+        userlist[USERNAME] = new User('INDEX', true);
+    }
 }
+
+function createID(LENGTH) {
+    var ID = '';
+    var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    for (var i = 0; i < LENGTH; i++) {
+        ID += alphabet.charAt(Math.floor(Math.random() * alphabet.length));
+    }
+    return ID;
+}
+
+function createGameServer(PHASE) {
+    var gameservercount = howmanygameservers();
+    while (true) {
+        var SERVERNAME = createID(7);
+        if (gameserverlist[SERVERNAME] == undefined) {
+            gameserverlist[SERVERNAME] = new GameServer(PHASE, gameservercount + 1);
+            return SERVERNAME;
+        }
+    }
+}
+
+function howmanygameservers() {
+    var result = 0;
+    for (var a in gameserverlist) {
+        if (gameserverlist.hasOwnProperty(a)) {
+            // or Object.prototype.hasOwnProperty.call(obj, prop)
+            result++;
+        }
+    }
+    return result;
+}
+
+
 
 var server = http.createServer(function (req, res) {
     var IP_REQ = getIpReq(req);
@@ -39,20 +86,55 @@ var server = http.createServer(function (req, res) {
     switch (path) {
         case '/':
             if (IP_USER[IP_REQ]) {
-                fs.readFile(__dirname + '/lobby.html', function (error, data) {
-                    if (error) {
-                        res.writeHead(404);
-                        res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
-                        res.end();
+                if (userlist[IP_USER[IP_REQ]].get('POSITION') == 'INGAME') {
+                    fs.readFile(__dirname + '/play.html', function (error, data) {
+                        if (error) {
+                            res.writeHead(404);
+                            res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                            res.end();
+                        }
+                        else {
+                            res.writeHead(200, { "Content-Type": "text/html" });
+                            res.write(data, "utf8");
+                            console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now INGAME on Server ${userlist[IP_USER[IP_REQ]].get('SERVER')}`);
+                            res.end();
+                        }
+                    });
+                }
+                else {
+                    if (userlist[IP_USER[IP_REQ]].get('MOD')) {
+                        fs.readFile(__dirname + '/lobbyMOD.html', function (error, data) {
+                            if (error) {
+                                res.writeHead(404);
+                                res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                                res.end();
+                            }
+                            else {
+                                res.writeHead(200, { "Content-Type": "text/html" });
+                                res.write(data, "utf8");
+                                userlist[IP_USER[IP_REQ]].set('POSITION', 'LOBBY');
+                                console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now on LOBBY`);
+                                res.end();
+                            }
+                        });
                     }
                     else {
-                        res.writeHead(200, { "Content-Type": "text/html" });
-                        res.write(data, "utf8");
-                        userlist[IP_USER[IP_REQ]].set('POSITION', 'LOBBY');
-                        console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now on LOBBY`);
-                        res.end();
+                        fs.readFile(__dirname + '/lobby.html', function (error, data) {
+                            if (error) {
+                                res.writeHead(404);
+                                res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                                res.end();
+                            }
+                            else {
+                                res.writeHead(200, { "Content-Type": "text/html" });
+                                res.write(data, "utf8");
+                                userlist[IP_USER[IP_REQ]].set('POSITION', 'LOBBY');
+                                console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now on LOBBY`);
+                                res.end();
+                            }
+                        });
                     }
-                });
+                }
             }
             else {
                 fs.readFile(__dirname + '/index.html', function (error, data) {
@@ -71,7 +153,6 @@ var server = http.createServer(function (req, res) {
             break;
         case '/jquery-2.1.4.min.js':
         case '/index.js':
-        case '/lobby.js':
             fs.readFile(__dirname + path, function (error, data) {
                 if (error) {
                     res.writeHead(404);
@@ -85,8 +166,29 @@ var server = http.createServer(function (req, res) {
                 }
             });
             break;
+        case '/lobby.js':
+        case '/play.js':
+            if (IP_USER[IP_REQ]) {
+                fs.readFile(__dirname + path, function (error, data) {
+                    if (error) {
+                        res.writeHead(404);
+                        res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                        res.end();
+                    }
+                    else {
+                        res.writeHead(200, { "Content-Type": "text/js" });
+                        res.write(data, "utf8");
+                        res.end();
+                    }
+                });
+            }
+            else {
+                res.writeHead(403);
+                res.write('<title>403</title>You do not have permission to access this page.');
+                res.end();
+            }
+            break;
         case '/index.css':
-        case '/lobby.css':
             fs.readFile(__dirname + path, function (error, data) {
                 if (error) {
                     res.writeHead(404);
@@ -99,6 +201,28 @@ var server = http.createServer(function (req, res) {
                     res.end();
                 }
             });
+            break;
+        case '/lobby.css':
+        case '/play.css':
+            if (IP_USER[IP_REQ]) {
+            fs.readFile(__dirname + path, function (error, data) {
+                if (error) {
+                    res.writeHead(404);
+                    res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                    res.end();
+                }
+                else {
+                    res.writeHead(200, { "Content-Type": "text/css" });
+                    res.write(data, "utf8");
+                    res.end();
+                }
+            });
+            }
+            else {
+                res.writeHead(403);
+                res.write('<title>403</title>You do not have permission to access this page.');
+                res.end();
+            }
             break;
         case '/namecheck':
             var name = url.parse(req.url).query;
@@ -127,7 +251,7 @@ var server = http.createServer(function (req, res) {
             break;
         default:
             res.writeHead(404);
-            res.write('<h1>Oops! This page doesn\'t seem to exist! 404</h1>');
+            res.write('<title>404</title><h1>Oops! This page doesn\'t seem to exist! 404</h1>');
             res.end();
             break;
     }
@@ -139,10 +263,21 @@ server.listen(port, function () {
 });
 
 io.listen(server);
-io.on('connection', function (socket) {
+io.sockets.on('connection', function (socket) {
     var IP = getIp(socket);
     socket.on(Type.LOGINDEX, function (to, username, password) {
         if (to == 'toserver') {
+            /*if (!userlist[username]) {
+                console.log(`${IP}(${username}) logged in successfully!`);
+                createUser(username);
+                console.log(`${IP}(${username}) is now on INDEX`);
+                IP_USER[IP] = username;
+                socket.emit(Type.LOGINDEX, 'toclient', username, 'success');
+            }
+            else {
+                console.log(`${IP} tried to login when already logged in!`);
+                socket.emit(Type.LOGINDEX, 'toclient', username, 'alreadyin');
+            }*/
 
             function sendrequest() {
                 // Start the request
@@ -150,11 +285,17 @@ io.on('connection', function (socket) {
                     if (!error && response.statusCode == 200) {
                         // Print out the response body
                         if (body.includes('title="Logout [ ' + username + ' ]"')) {
-                            console.log(`${IP}(${username}) logged in successfully!`);
-                            createUser(username);
-                            console.log(`${IP}(${username}) is now on INDEX`);
-                            IP_USER[IP] = username;
-                            socket.emit(Type.LOGINDEX, 'toclient', username, 'success');
+                            if (!userlist[username]) {
+                                console.log(`${IP}(${username}) logged in successfully!`);
+                                createUser(username);
+                                console.log(`${IP}(${username}) is now on INDEX`);
+                                IP_USER[IP] = username;
+                                socket.emit(Type.LOGINDEX, 'toclient', username, 'success');
+                            }
+                            else {
+                                console.log(`${IP} tried to login when already logged in!`);
+                                socket.emit(Type.LOGINDEX, 'toclient', username, 'alreadyin');
+                            }
                         }
                         else {
                             var captcha = body.substring(body.lastIndexOf("Spell this word backwards: ") + 27, body.lastIndexOf(":</label><br /><span>This"));
@@ -168,11 +309,17 @@ io.on('connection', function (socket) {
                                 if (!error2 && response2.statusCode == 200) {
                                     // Print out the response body
                                     if (body2.includes('title="Logout [ ' + username + ' ]"')) {
-                                        console.log(`${IP}(${username}) logged in successfully!`);
-                                        createUser(username);
-                                        console.log(`${IP}(${username}) is now on INDEX`);
-                                        IP_USER[IP] = username;
-                                        socket.emit(Type.LOGINDEX, 'toclient', username, 'success');
+                                        if (!userlist[username]) {
+                                            console.log(`${IP}(${username}) logged in successfully!`);
+                                            createUser(username);
+                                            console.log(`${IP}(${username}) is now on INDEX`);
+                                            IP_USER[IP] = username;
+                                            socket.emit(Type.LOGINDEX, 'toclient', username, 'success');
+                                        }
+                                        else {
+                                            console.log(`${IP} tried to login when already logged in!`);
+                                            socket.emit(Type.LOGINDEX, 'toclient', username, 'alreadyin');
+                                        }
                                     }
                                     else {
                                         console.log(`${IP} inserted a wrong username or password!`);
@@ -194,20 +341,95 @@ io.on('connection', function (socket) {
             setTimeout(sendrequest, 0);
         }
     });
-    socket.on(Type.LOGOUT, function (to, username) {
-        if (to == 'toserver') {
+    socket.on(Type.LOGOUT, function (to) {
+        if (to == 'toserver' && IP_USER[IP]) {
+            console.log(`${IP}(${IP_USER[IP]}) has logged out!`);
+            delete userlist[IP_USER[IP]];
             delete IP_USER[IP];
-            delete userlist[username];
-            console.log(`${IP}(${username}) has logged out!`);
-            socket.emit(Type.LOGOUT, 'toclient', username);
+            socket.emit(Type.LOGOUT, 'toclient');
+        }
+    });
+    socket.on(Type.JOINGAME, function (to, game) {
+        if (to == 'toserver' && IP_USER[IP]) {
+            switch (game) {
+                case 'Automod':
+                    var USERNAME = IP_USER[IP];
+                    if (userlist[USERNAME].get('POSITION') == 'INGAME') {
+                        socket.emit(Type.JOINGAME, 'toclient', 'error');
+                    }
+                    else if (howmanygameservers() == 0) {
+                        var SERVERNAME = createGameServer('LOBBY');
+                        userlist[IP_USER[IP]].set('POSITION', 'INGAME');
+                        userlist[IP_USER[IP]].set('SERVER', SERVERNAME);
+                        gameserverlist[SERVERNAME].set('MOD', false);
+                        gameserverlist[SERVERNAME].add('PLAYER', USERNAME);
+                        gameserverlist[SERVERNAME].set('HOST', USERNAME);
+                        io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                        socket.emit(Type.JOINGAME, 'toclient', 'success');
+                    }
+                    else {
+                        var allfull = true;
+                        for (var i in gameserverlist) {
+                            if (gameserverlist[i].get('PLAYERCOUNT') < 15 && gameserverlist[i].get('MOD') == false) {
+                                userlist[IP_USER[IP]].set('POSITION', 'INGAME');
+                                userlist[IP_USER[IP]].set('SERVER', i);
+                                gameserverlist[i].add('PLAYER', USERNAME);
+                                io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
+                                allfull = false;
+                                socket.emit(Type.JOINGAME, 'toclient', 'success');
+                                break;
+                            }
+                        }
+                        if (allfull) {
+                            var SERVERNAME = createGameServer('LOBBY');
+                            userlist[IP_USER[IP]].set('POSITION', 'INGAME');
+                            userlist[IP_USER[IP]].set('SERVER', SERVERNAME);
+                            gameserverlist[SERVERNAME].set('MOD', false);
+                            gameserverlist[SERVERNAME].add('PLAYER', USERNAME);
+                            gameserverlist[SERVERNAME].set('HOST', USERNAME);
+                            io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                            socket.emit(Type.JOINGAME, 'toclient', 'success');
+                        }
+                    }
+                    break;
+                case 'Modded Game':
+                    console.log('Modded Game.')
+                    break;
+                default:
+                    socket.emit(Type.JOINGAME, 'toclient', 'notagame');
+                    break;
+            }
+            //console.log(`${IP}(${IP_USER[IP]}) has logged out!`);
+        }
+    });
+    /*function sendserverlist() {
+        var list = '';
+        for (i in gameserverlist) {
+            if (list == '') {
+                list += `${gameserverlist[i].get('PHASE')}|${gameserverlist[i].get('MOD')}|${gameserverlist[i].get('PLAYERS')}|${gameserverlist[i].get('PLAYERCOUNT')}|${gameserverlist[i].get('COUNT')}`;
+            }
+            else {
+                list += `;${gameserverlist[i].get('PHASE')}|${gameserverlist[i].get('MOD')}|${gameserverlist[i].get('PLAYERS')}|${gameserverlist[i].get('PLAYERCOUNT')}|${gameserverlist[i].get('COUNT')}`;
+            }
+        }
+        socket.emit(Type.SERVERLIST, list);
+    };
+    setInterval(sendserverlist, 1000);*/
+    socket.on(Type.JOINPLAY, function () {
+        if (IP_USER[IP]) {
+            var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+            socket.join(SERVERNAME);
+            socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
         }
     });
 });
 
 class User {
-    constructor(POSITION) {
+    constructor(POSITION, MOD) {
         this.__POSITION = POSITION;
+        this.__MOD = MOD;
         this.__NICKNAME = '';
+        this.__SERVER = false;
     }
     get(value) {
         switch (value) {
@@ -215,6 +437,10 @@ class User {
                 return this.__POSITION;
             case 'NICKNAME':
                 return this.__NICKNAME;
+            case 'MOD':
+                return this.__MOD;
+            case 'SERVER':
+                return this.__SERVER;
             default:
                 return false;
         }
@@ -227,8 +453,108 @@ class User {
             case 'NICKNAME':
                 this.__NICKNAME = value2;
                 return true;
+            case 'SERVER':
+                this.__SERVER = value2;
+                return true;
             default:
                 return false;
         }
     }
 };
+
+class GameServer {
+    constructor(PHASE, COUNT) {
+        this.__PHASE = PHASE;
+        this.__MOD = undefined;
+        this.__HOST = undefined;
+        this.__PLAYERS = new Array;
+        this.__ROLELIST = ['Town Power', 'Godfather'];
+        this.__PLAYERCOUNT = 0;
+        this.__COUNT = COUNT;
+    }
+    get(value) {
+        switch (value) {
+            case 'PHASE':
+                return this.__PHASE;
+            case 'MOD':
+                return this.__MOD;
+            case 'HOST':
+                return this.__HOST;
+            case 'PLAYERS':
+                return this.__PLAYERS;
+            case 'ROLELIST':
+                return this.__ROLELIST;
+            case 'PLAYERCOUNT':
+                return this.__PLAYERCOUNT;
+            case 'COUNT':
+                return this.__COUNT;
+            default:
+                return false;
+        }
+    }
+    set(value1, value2) {
+        switch (value1) {
+            case 'PHASE':
+                this.__PHASE = value2;
+                return true;
+            case 'MOD':
+                this.__MOD = value2;
+                return true;
+            case 'HOST':
+                this.__HOST = value2;
+                return true;
+            case 'COUNT':
+                this.__COUNT = value2;
+                return true;
+            default:
+                return false;
+        }
+    }
+    add(value1, value2) {
+        switch (value1) {
+            case 'PLAYER':
+                this.__PLAYERS[this.__PLAYERCOUNT] = value2;
+                this.__PLAYERCOUNT++;
+                break;
+        }
+    }
+    remove(value1, value2) {
+        switch (value1) {
+            case 'PLAYER':
+                this.__PLAYERS.splice(this.__PLAYERS.indexOf(value2), 1);
+                this.__PLAYERCOUNT--;
+                break;
+        }
+    }
+};
+
+/*for (var i = 0; i < 10; i++) {
+    createGameServer('Lobby');
+}
+var j = 0;
+var element = ''
+for (i in gameserverlist) {
+    if (j == 2) {
+        element = i;
+        break;
+    }
+    j++;
+}
+
+
+gameserverlist[element].add('PLAYER', 'A');
+gameserverlist[element].add('PLAYER', 'BZ');
+gameserverlist[element].add('PLAYER', 'EG');
+gameserverlist[element].remove('PLAYER', 'BZ');*/
+
+/*var result = 0;
+for (var a in gameserverlist) {
+    if (gameserverlist.hasOwnProperty(a)) {
+        // or Object.prototype.hasOwnProperty.call(obj, prop)
+        result++;
+    }
+}
+console.log(result);*/
+    for (var i in gameserverlist) {
+        io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
+    }

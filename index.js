@@ -1,7 +1,9 @@
 ﻿//Enums
 var Type = {
     LOGINDEX: 0,
-    LOGOUT: 1
+    LOGOUT: 1,
+    SERVERLIST: 2,
+    JOINGAME: 3
 };
 
 $(document).ready(function () {
@@ -13,6 +15,7 @@ $(document).ready(function () {
     $('#password').keyup(function () {
         $('#send').attr('disabled', false);
         $('#error').css('display', 'none');
+        checkPW($('#password').val());
     });
     $('#username').keydown(function (e) {
         if (e.keyCode == 13) {
@@ -66,9 +69,18 @@ function checkName(name) {
                 $('#error').css('display', 'block');
             }
         }, error: function () {
-            console.log('ERROR! Unable to make AJAX request.');
+            $('#error').html('Error! Unable to perform AJAX request. Please inform the Server Administrator about that!');
+            $('#error').css('display', 'block');
         }
     });
+};
+
+function checkPW(PW) {
+    if (PW.length == 0) {
+        $('#error').html('You have to enter a valid password!');
+        $('#error').css('display', 'block');
+        $('#send').attr('disabled', 'disabled');
+    }
 };
 
 function loginindex() {
@@ -115,18 +127,25 @@ socket.on(Type.LOGINDEX, function (to, username, value) {
     if (to == 'toclient') {
         switch (value) {
             case 'success':
-                $('#error').html('The Login was successful! You are being redirected!');
+                /*$('#error').html('The Login was successful! You are being redirected!');
                 $('#error').css('display', 'block');
                 $('#send').attr('disabled', 'disabled');
                 setCookie('username', username);
                 window.setTimeout(function () {
                     document.location.reload();
                 }, 3000);
-                break;
+                break;*/
+                window.location.reload();
             case 'error':
                 $('#error').html('Your Username or Password are incorrect. Please check your input!');
                 $('#error').css('display', 'block');
                 $('#send').attr('disabled', 'disabled');
+                break;
+            case 'alreadyin':
+                $('#error').html('Someone is already logged in with that account. If you believe this is an error please contact an administrator!');
+                $('#error').css('display', 'block');
+                $('#send').attr('disabled', 'disabled');
+                break;
         }
     }
 });

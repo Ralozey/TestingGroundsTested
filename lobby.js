@@ -1,8 +1,19 @@
-﻿//Enums
+﻿/*var serverlist = new Array();
+var serverlistlength = 0;*/
+
+//Enums
 var Type = {
     LOGINDEX: 0,
-    LOGOUT: 1
+    LOGOUT: 1,
+    PLAYERLIST: 2,
+    JOINGAME: 3
 };
+
+$(document).ready(function () {
+    $('#serverselect').change(function () {
+        console.log(getselectedserver());
+    });
+});
 
 var socket = io.connect({ 'pingInterval': 45000 });
 
@@ -37,11 +48,81 @@ function checkCookie(cname) {
 }
 
 function logout() {
-    var username = getCookie('username');
     document.cookie = 'username' + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    socket.emit(Type.LOGOUT, 'toserver', username);
+    socket.emit(Type.LOGOUT, 'toserver');
 }
 
-socket.on(Type.LOGOUT, function (to, username) {
-    document.location.reload();
+function showgamemodes() {
+    $('#mainbox').html('<button onclick="delmainbox();">X</button><select id="gamemodeselect" size="2"><option>Automod</option><option disabled>Modded Game</option></select><button onclick="joinlobby();">Join Lobby</button>\n<h5 id="error"></h5>');
+}
+
+function delmainbox() {
+    $('#mainbox').html('');
+}
+
+function joinlobby() {
+    var modeselect_element = document.getElementById('gamemodeselect');
+    var modeselect = modeselect_element.value.trim();
+    socket.emit(Type.JOINGAME, 'toserver', modeselect);
+}
+
+/*function getselectedserver() {
+    var serverselect_element = document.getElementById('serverselect');
+    var serverselect = serverselect_element.value.trim();
+    return serverselect;
+}*/
+
+socket.on(Type.LOGOUT, function (to) {
+    window.location.reload();
 });
+
+socket.on(Type.JOINGAME, function (to, back) {
+    if (back == 'error') {
+        $('#error').html('Your account is already in a game. If you believe this is an error pelase contact an Administrator.');
+        $('#error').css('display', 'block');
+        setTimeout(function () { $('#error').css('display', 'none'); }, 5000);
+    }
+    else if (back == 'success') {
+        window.location.reload();
+    }
+    else {
+        $('#error').html('Recieved wrong message. Did you break something?');
+        $('#error').css('display', 'block');
+        setTimeout(function () { $('#error').css('display', 'none'); }, 5000);
+    }
+});
+
+/*socket.on(Type.SERVERLIST, function (SERVERLIST) {
+    $('#lobbylist').html('');
+    var SERVERS = SERVERLIST.split(';');
+    serverlistlength = 0;
+    for (i in SERVERS) {
+        serverlistlength++;
+        serverlist[i] = [];
+        var SERVER = SERVERS[i].split('|');
+        serverlist[i][0] = SERVER[0];
+        serverlist[i][1] = SERVER[1];
+        if (SERVER[2] != []) {
+            var USERS = SERVER[2].split(',');
+            serverlist[i][2] = [];
+            for (j in USERS) {
+                serverlist[i][2][j] = USERS[j];
+            }
+        }
+        else serverlist[i][2] = SERVER[2];
+        serverlist[i][3] = SERVER[3];
+        serverlist[i][4] = SERVER[4];
+        if ($('#serverselect option').size() - 1 < i) {
+            $('#serverselect').append(`<option id='Server${parseInt(i) + 1}'>Server #${parseInt(i) + 1}</option>`);
+            $('#serverselect').attr('size', parseInt(i) + 1);
+        }
+    }
+    if (serverlistlength == serverlist.length) {
+
+    }
+    else {
+
+    }
+});
+
+setTimeout(function () { console.log(serverlist) }, 5000);*/
