@@ -470,8 +470,9 @@ io.sockets.on('connection', function (socket) {
         }
     });
     socket.on(Type.PONG, function () {
-        userlist[IP_USER[IP]].set('PING', userlist[IP_USER[IP]].get('PINGTIME'));
-        console.log(userlist[IP_USER[IP]].get('PINGTIME'));
+        if (IP_USER[IP]) {
+            userlist[IP_USER[IP]].set('PING', userlist[IP_USER[IP]].get('PINGTIME'));
+        }
     });
 });
 
