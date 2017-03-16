@@ -54,7 +54,7 @@ function checkPing() {
             delete userlist[i];
             for (var j in IP_USER) {
                 if (IP_USER[j] = i) {
-                    delete IP_USER[IP];
+                    delete IP_USER[j];
                 }
             }
         }
