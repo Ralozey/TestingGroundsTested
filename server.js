@@ -34,6 +34,7 @@ var PhaseType = {
 }
 
 ping();
+pingtimer();
 
 //Pinging functions
 function ping() {
@@ -55,7 +56,7 @@ function checkPing() {
 }
 
 function pingtimer() {
-    for (i in userlist) {
+    for (var i in userlist) {
         if (userlist[i].get('PING') == -1) {
             userlist[i].set('PINGTIME', userlist[i].get('PINGTIME') + 10);
         }
