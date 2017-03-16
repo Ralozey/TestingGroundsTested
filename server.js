@@ -67,7 +67,11 @@ function checkPing() {
             if (userlist[i].get('POSITION') == 'INGAME') {
                 gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
-            removeA(IP_USER, i);
+            for (var j = 0; j < IP_USER.length; j++)
+                if (items[j] === i) {
+                    items.splice(j, 1);
+                    break;
+                }
             delete userlist[i];
             console.log(IP_USER);
             console.log(userlist);
