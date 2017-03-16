@@ -56,12 +56,12 @@ function checkPing() {
             if (userlist[i].get('POSITION') == 'INGAME') {
                 gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
-            delete userlist[i];
             for (var j in IP_USER) {
                 if (IP_USER[j] = i) {
                     delete IP_USER[j];
                 }
             }
+            delete userlist[i];
             console.log(IP_USER);
             console.log(userlist);
         }
@@ -397,7 +397,6 @@ io.sockets.on('connection', function (socket) {
             console.log(`${IP}(${IP_USER[IP]}) has logged out!`);
             delete userlist[IP_USER[IP]];
             delete IP_USER[IP];
-            console.log(IP_USER);
             socket.emit(Type.LOGOUT, 'toclient');
         }
     });
