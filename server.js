@@ -50,6 +50,9 @@ function checkPing() {
         if (userlist[i].get('PING') == -1) {
             //Player did not reply after 10 seconds. Disconnected.
             userlist[i].get('SOCKET').disconnect();
+            console.log(`${i} disconnected. Deleting their User File.`);
+            delete userlist[IP_USER[IP]];
+            delete IP_USER[IP];
         }
     }
     setTimeout(ping, 0);
