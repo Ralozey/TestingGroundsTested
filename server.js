@@ -51,6 +51,9 @@ function checkPing() {
             //Player did not reply after 10 seconds. Disconnected.
             userlist[i].get('SOCKET').disconnect();
             console.log(`${i} disconnected. Deleting their User File.`);
+            if (userlist[i].get('POSITION') == 'INGAME') {
+                gameserverlist[userlist[i].get('SERVER')].remove(i);
+            }
             delete userlist[i];
             for (var j in IP_USER) {
                 if (IP_USER[j] = i) {
