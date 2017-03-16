@@ -33,17 +33,6 @@ var PhaseType = {
     LOBBY: 0
 }
 
-function removeA(arr) {
-    var what, a = arguments, L = a.length, ax;
-    while (L > 1 && arr.length) {
-        what = a[--L];
-        while ((ax = arr.indexOf(what)) !== -1) {
-            arr.splice(ax, 1);
-        }
-    }
-    return arr;
-}
-
 ping();
 pingtimer();
 
@@ -61,17 +50,14 @@ function ping() {
 function checkPing() {
     for (var i in userlist) {
         if (userlist[i].get('PING') == -1) {
+            let IP = userlist[i].get('IP');
             //Player did not reply after 10 seconds. Disconnected.
             userlist[i].get('SOCKET').disconnect();
-            console.log(`${i} disconnected. Deleting their User File.`);
+            console.log(`${IP}(${i}) disconnected. Deleting their User File.`);
             if (userlist[i].get('POSITION') == 'INGAME') {
                 gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
-            for (var j = 0; j < IP_USER.length; j++)
-                if (items[j] === i) {
-                    items.splice(j, 1);
-                    break;
-                }
+            delete IP_USER[IP];
             delete userlist[i];
             console.log(IP_USER);
             console.log(userlist);
@@ -326,6 +312,7 @@ io.sockets.on('connection', function (socket) {
     if (IP_USER[IP]) {
         userlist[IP_USER[IP]].set('SOCKETID', socket.id);
         userlist[IP_USER[IP]].set('SOCKET', socket);
+        userlist[IP_USER[IP]].set('IP', IP);
     }
     socket.on(Type.LOGINDEX, function (to, username, password) {
         if (to == 'toserver') {
@@ -501,6 +488,7 @@ class User {
         this.__SOCKET = '';
         this.__PING = 0;
         this.__PINGTIME = 0;
+        this.__IP = '';
     }
     get(value) {
         switch (value) {
@@ -520,6 +508,8 @@ class User {
                 return this.__PING;
             case 'PINGTIME':
                 return this.__PINGTIME;
+            case 'IP':
+                return this.__IP;
             default:
                 return false;
         }
@@ -546,6 +536,9 @@ class User {
                 return true;
             case 'PINGTIME':
                 this.__PINGTIME = value2;
+                return true;
+            case 'IP':
+                this.__IP = value2;
                 return true;
             default:
                 return false;
