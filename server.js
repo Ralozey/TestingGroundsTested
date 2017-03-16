@@ -33,16 +33,16 @@ var PhaseType = {
     LOBBY: 0
 }
 
-Array.prototype.remove = function () {
+function removeA(arr) {
     var what, a = arguments, L = a.length, ax;
-    while (L && this.length) {
+    while (L > 1 && arr.length) {
         what = a[--L];
-        while ((ax = this.indexOf(what)) !== -1) {
-            this.splice(ax, 1);
+        while ((ax = arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
         }
     }
-    return this;
-};
+    return arr;
+}
 
 ping();
 pingtimer();
@@ -67,7 +67,7 @@ function checkPing() {
             if (userlist[i].get('POSITION') == 'INGAME') {
                 gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
-            IP_USER.remove(i);
+            removeA(IP_USER, i);
             delete userlist[i];
             console.log(IP_USER);
             console.log(userlist);
