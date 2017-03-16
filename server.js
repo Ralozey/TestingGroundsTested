@@ -33,6 +33,17 @@ var PhaseType = {
     LOBBY: 0
 }
 
+Array.prototype.remove = function () {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};
+
 ping();
 pingtimer();
 
@@ -50,20 +61,13 @@ function ping() {
 function checkPing() {
     for (var i in userlist) {
         if (userlist[i].get('PING') == -1) {
-            let IP;
-            for (var j in IP_USER) {
-                if (IP_USER[j] = i) {
-                    IP = j;
-                    break;
-                }
-            }
             //Player did not reply after 10 seconds. Disconnected.
             userlist[i].get('SOCKET').disconnect();
-            console.log(`${IP}(${i}) disconnected. Deleting their User File.`);
+            console.log(`${i} disconnected. Deleting their User File.`);
             if (userlist[i].get('POSITION') == 'INGAME') {
                 gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
-            delete IP_USER[IP];
+            IP_USER.remove(i);
             delete userlist[i];
             console.log(IP_USER);
             console.log(userlist);
