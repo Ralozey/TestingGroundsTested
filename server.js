@@ -50,17 +50,20 @@ function ping() {
 function checkPing() {
     for (var i in userlist) {
         if (userlist[i].get('PING') == -1) {
+            let IP;
+            for (var j in IP_USER) {
+                if (IP_USER[j] = i) {
+                    IP = j;
+                    break;
+                }
+            }
             //Player did not reply after 10 seconds. Disconnected.
             userlist[i].get('SOCKET').disconnect();
-            console.log(`${i} disconnected. Deleting their User File.`);
+            console.log(`${IP}(${i}) disconnected. Deleting their User File.`);
             if (userlist[i].get('POSITION') == 'INGAME') {
                 gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
-            for (var j in IP_USER) {
-                if (IP_USER[j] = i) {
-                    delete IP_USER[j];
-                }
-            }
+            delete IP_USER[IP];
             delete userlist[i];
             console.log(IP_USER);
             console.log(userlist);
