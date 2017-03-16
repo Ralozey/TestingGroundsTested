@@ -1,10 +1,12 @@
 ﻿//Enums
 var Type = {
-    LOGINDEX: 0,
-    LOGOUT: 1,
-    GAMEINFO: 2,
-    JOINGAME: 3,
-    JOINPLAY: 4
+    PING: 0,
+    PONG: 1,
+    LOGINDEX: 2,
+    LOGOUT: 3,
+    GAMEINFO: 4,
+    JOINGAME: 5,
+    JOINPLAY: 6
 };
 
 $(document).ready(function () {
@@ -26,6 +28,10 @@ function updateplayerlist(Array) {
 }
 
 var socket = io.connect({ 'pingInterval': 45000 });
+
+socket.on(Type.PING, function () {
+    socket.emit(Type.PONG);
+});
 
 socket.on(Type.GAMEINFO, function (GAMEINFO) {
     if (GAMEINFO[1] == 'LOBBY') {

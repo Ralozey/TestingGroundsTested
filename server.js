@@ -20,15 +20,47 @@ var headers = {
 
 //Enums
 var Type = {
-    LOGINDEX: 0,
-    LOGOUT: 1,
-    GAMEINFO: 2,
-    JOINGAME: 3,
-    JOINPLAY: 4
+    PING: 0,
+    PONG: 1,
+    LOGINDEX: 2,
+    LOGOUT: 3,
+    GAMEINFO: 4,
+    JOINGAME: 5,
+    JOINPLAY: 6
 };
 
 var PhaseType = {
     LOBBY: 0
+}
+
+ping();
+
+//Pinging functions
+function ping() {
+    for (var i in userlist) {
+        userlist[i].set('PING', -1);
+        userlist[i].set('PINGTIME', 0);
+        userlist[i].get('SOCKET').emit(Type.PING);
+    }
+    setTimeout(checkPing, 10000);
+}
+function checkPing() {
+    for (var i in userlist) {
+        if (userlist[i].get('PING') == -1) {
+            //Player did not reply after 10 seconds. Disconnected.
+            userlist[i].get('SOCKET').disconnect();
+        }
+    }
+    setTimeout(ping, 0);
+}
+
+function pingtimer() {
+    for (i in userlist) {
+        if (userlist[i].get('PING') == -1) {
+            userlist[i].set('PINGTIME', userlist[i].get('PINGTIME') + 10);
+        }
+    }
+    setTimeout(pingtimer, 10);
 }
 
 function getIp(socket) {
@@ -265,6 +297,10 @@ server.listen(port, function () {
 io.listen(server);
 io.sockets.on('connection', function (socket) {
     var IP = getIp(socket);
+    if (IP_USER[IP]) {
+        userlist[IP_USER[IP]].set('SOCKETID', socket.id);
+        userlist[IP_USER[IP]].set('SOCKET', socket);
+    }
     socket.on(Type.LOGINDEX, function (to, username, password) {
         if (to == 'toserver') {
             /*if (!userlist[username]) {
@@ -422,6 +458,10 @@ io.sockets.on('connection', function (socket) {
             socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
         }
     });
+    socket.on(Type.PONG, function () {
+        userlist[IP_USER[IP]].set('PING', userlist[IP_USER[IP]].get('PINGTIME'));
+        console.log(userlist[IP_USER[IP]].get('PINGTIME'));
+    });
 });
 
 class User {
@@ -430,6 +470,10 @@ class User {
         this.__MOD = MOD;
         this.__NICKNAME = '';
         this.__SERVER = false;
+        this.__SOCKETID = '';
+        this.__SOCKET = '';
+        this.__PING = 0;
+        this.__PINGTIME = 0;
     }
     get(value) {
         switch (value) {
@@ -441,6 +485,14 @@ class User {
                 return this.__MOD;
             case 'SERVER':
                 return this.__SERVER;
+            case 'SOCKETID':
+                return this.__SOCKETID;
+            case 'SOCKET':
+                return this.__SOCKET;
+            case 'PING':
+                return this.__PING;
+            case 'PINGTIME':
+                return this.__PINGTIME;
             default:
                 return false;
         }
@@ -455,6 +507,18 @@ class User {
                 return true;
             case 'SERVER':
                 this.__SERVER = value2;
+                return true;
+            case 'SOCKETID':
+                this.__SOCKETID = value2;
+                return true;
+            case 'SOCKET':
+                this.__SOCKET = value2;
+                return true;
+            case 'PING':
+                this.__PING = value2;
+                return true;
+            case 'PINGTIME':
+                this.__PINGTIME = value2;
                 return true;
             default:
                 return false;
@@ -555,6 +619,3 @@ for (var a in gameserverlist) {
     }
 }
 console.log(result);*/
-    for (var i in gameserverlist) {
-        io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
-    }

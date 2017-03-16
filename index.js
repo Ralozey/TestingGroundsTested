@@ -1,9 +1,12 @@
 ﻿//Enums
 var Type = {
-    LOGINDEX: 0,
-    LOGOUT: 1,
-    SERVERLIST: 2,
-    JOINGAME: 3
+    PING: 0,
+    PONG: 1,
+    LOGINDEX: 2,
+    LOGOUT: 3,
+    GAMEINFO: 4,
+    JOINGAME: 5,
+    JOINPLAY: 6
 };
 
 $(document).ready(function () {
@@ -122,6 +125,10 @@ function checkCookie(cname) {
         return false;
     }
 }
+
+socket.on(Type.PING, function () {
+    socket.emit(Type.PONG);
+});
 
 socket.on(Type.LOGINDEX, function (to, username, value) {
     if (to == 'toclient') {

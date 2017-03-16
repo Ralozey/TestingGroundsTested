@@ -3,10 +3,13 @@ var serverlistlength = 0;*/
 
 //Enums
 var Type = {
-    LOGINDEX: 0,
-    LOGOUT: 1,
-    PLAYERLIST: 2,
-    JOINGAME: 3
+    PING: 0,
+    PONG: 1,
+    LOGINDEX: 2,
+    LOGOUT: 3,
+    GAMEINFO: 4,
+    JOINGAME: 5,
+    JOINPLAY: 6
 };
 
 $(document).ready(function () {
@@ -71,6 +74,10 @@ function joinlobby() {
     var serverselect = serverselect_element.value.trim();
     return serverselect;
 }*/
+
+socket.on(Type.PING, function () {
+    socket.emit(Type.PONG);
+});
 
 socket.on(Type.LOGOUT, function (to) {
     window.location.reload();
