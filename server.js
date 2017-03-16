@@ -52,7 +52,7 @@ function checkPing() {
             userlist[i].get('SOCKET').disconnect();
             console.log(`${i} disconnected. Deleting their User File.`);
             if (userlist[i].get('POSITION') == 'INGAME') {
-                gameserverlist[userlist[i].get('SERVER')].remove(i);
+                gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
             }
             delete userlist[i];
             for (var j in IP_USER) {
