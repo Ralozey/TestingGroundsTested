@@ -39,9 +39,11 @@ pingtimer();
 //Pinging functions
 function ping() {
     for (var i in userlist) {
-        userlist[i].set('PING', -1);
-        userlist[i].set('PINGTIME', 0);
-        userlist[i].get('SOCKET').emit(Type.PING);
+        if (userlist[i].get('SOCKET') != '') {
+            userlist[i].set('PING', -1);
+            userlist[i].set('PINGTIME', 0);
+            userlist[i].get('SOCKET').emit(Type.PING);
+        }
     }
     setTimeout(checkPing, 10000);
 }
