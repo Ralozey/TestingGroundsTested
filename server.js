@@ -397,6 +397,7 @@ io.sockets.on('connection', function (socket) {
             console.log(`${IP}(${IP_USER[IP]}) has logged out!`);
             delete userlist[IP_USER[IP]];
             delete IP_USER[IP];
+            console.log(IP_USER);
             socket.emit(Type.LOGOUT, 'toclient');
         }
     });
