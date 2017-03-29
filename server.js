@@ -522,33 +522,35 @@ io.sockets.on('connection', function (socket) {
         }
     });
     socket.on(Type.LOBBYACTION, function (action, value1, value2) {
-        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
-        switch (action) {
-            case 'removerole':
-                if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
-                    gameserverlist[SERVERNAME].remove('ROLE', value1);
-                    sendgameinfo(SERVERNAME);
-                    //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
-                }
-                break;
-            case 'addrole':
-                if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
-                    for (var i in roles.roles) {
-                        for (var j in roles.roles[i]) {
-                            if (j != 'name' && j != 'color' && j != 'id') {
-                                if (j == value1) {
-                                    gameserverlist[SERVERNAME].add('ROLE', j);
-                                    sendgameinfo(SERVERNAME);
-                                    //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
-                                }
-                                else {
-                                    for (var k in roles.roles[i][j]) {
-                                        if (k != 'name' && k != 'color' && k != 'id') {
-                                            if (k == value1) {
-                                                gameserverlist[SERVERNAME].add('ROLE', k);
-                                                sendgameinfo(SERVERNAME);
-                                                //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+        if (IP_USER[IP]) {
+            var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+            switch (action) {
+                case 'removerole':
+                    if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                        gameserverlist[SERVERNAME].remove('ROLE', value1);
+                        sendgameinfo(SERVERNAME);
+                        //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                    }
+                    break;
+                case 'addrole':
+                    if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                        for (var i in roles.roles) {
+                            for (var j in roles.roles[i]) {
+                                if (j != 'name' && j != 'color' && j != 'id') {
+                                    if (j == value1) {
+                                        gameserverlist[SERVERNAME].add('ROLE', j);
+                                        sendgameinfo(SERVERNAME);
+                                        //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                                    }
+                                    else {
+                                        for (var k in roles.roles[i][j]) {
+                                            if (k != 'name' && k != 'color' && k != 'id') {
+                                                if (k == value1) {
+                                                    gameserverlist[SERVERNAME].add('ROLE', k);
+                                                    sendgameinfo(SERVERNAME);
+                                                    //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
 
+                                                }
                                             }
                                         }
                                     }
@@ -556,24 +558,26 @@ io.sockets.on('connection', function (socket) {
                             }
                         }
                     }
-                }
-                break;
+                    break;
+            }
         }
     });
     socket.on(Type.MSG, function (msg) {
-        msg = sanitize(msg);
-        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
-        if (msg.length > 200) {
-            socket.emit(Type.SYSTEM, 'Your message was too long.');
-        }
-        else if (msg.trim() == '') {
-            socket.emit(Type.SYSTEM, 'Cannot send an empty message.');
-        }
-        else if (msg[0] == '/') {
-            //INPUT COMMANDS
-        }
-        else {
-            io.sockets.in(SERVERNAME).emit(Type.MSG, `${IP_USER[IP]}: ${msg}`, 'msg');
+        if (IP_USER[IP]) {
+            msg = sanitize(msg);
+            var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+            if (msg.length > 200) {
+                socket.emit(Type.SYSTEM, 'Your message was too long.');
+            }
+            else if (msg.trim() == '') {
+                socket.emit(Type.SYSTEM, 'Cannot send an empty message.');
+            }
+            else if (msg[0] == '/') {
+                //INPUT COMMANDS
+            }
+            else {
+                io.sockets.in(SERVERNAME).emit(Type.MSG, `${IP_USER[IP]}: ${msg}`, 'msg');
+            }
         }
     });
 });
