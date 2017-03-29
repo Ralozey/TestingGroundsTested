@@ -518,20 +518,22 @@ io.sockets.on('connection', function (socket) {
                 }
                 break;
             case 'addrole':
-                for (var i in roles.roles) {
-                    for (var j in roles.roles[i]) {
-                        if (j != 'name' && j != 'color' && j != 'id') {
-                            if (j == value1) {
-                                gameserverlist[SERVERNAME].add('ROLE', j);
-                                io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
-                            }
-                            else {
-                                for (var k in roles.roles[i][j]) {
-                                    if (k != 'name' && k != 'color' && k != 'id') {
-                                        if (k == value1) {
-                                            gameserverlist[SERVERNAME].add('ROLE', k);
-                                            io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
+                if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                    for (var i in roles.roles) {
+                        for (var j in roles.roles[i]) {
+                            if (j != 'name' && j != 'color' && j != 'id') {
+                                if (j == value1) {
+                                    gameserverlist[SERVERNAME].add('ROLE', j);
+                                    io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
+                                }
+                                else {
+                                    for (var k in roles.roles[i][j]) {
+                                        if (k != 'name' && k != 'color' && k != 'id') {
+                                            if (k == value1) {
+                                                gameserverlist[SERVERNAME].add('ROLE', k);
+                                                io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
 
+                                            }
                                         }
                                     }
                                 }
