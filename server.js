@@ -143,7 +143,8 @@ function howmanygameservers() {
 }
 
 function sendgameinfo(SERVERNAME) {
-    var PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS')
+    console.log(SERVERNAME);
+    var PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS');
     for (var i in PLAYERS) {
         userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i]]);
     }
