@@ -13,6 +13,7 @@ var Type = {
 };
 
 var socket = io.connect({ 'pingInterval': 45000 });
+var thishost = false;
 
 $(document).ready(function () {
     $('#roleallign').change(function () {
@@ -144,6 +145,12 @@ socket.on(Type.PING, function () {
 });
 
 socket.on(Type.GAMEINFO, function (GAMEINFO) {
+    if (GAMEINFO[3] == GAMEINFO[4]) {
+        thishost = true;
+    }
+    else {
+        thishost = false;
+    }
     if (GAMEINFO[1] == 'LOBBY') {
         $('#playerlist').html(updatelist(GAMEINFO[0]));
         $('#rolelist').html(updaterolelist(GAMEINFO[2]));
@@ -151,8 +158,14 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         $('#roleallign').attr('size', updateoptions[1]);
         $('#roleallign').html(updateoptions[0]);
         $('#roleallign').css('display', 'inline');
-        $('#roleallign').attr('disabled', false);
-        $('#rolelist').attr('disabled', false);
+        if (thishost) {
+            $('#roleallign').attr('disabled', false);
+            $('#rolelist').attr('disabled', false);
+        }
+        else {
+            $('#roleallign').attr('disabled', true);
+            $('#rolelist').attr('disabled', true);
+        }
         if (!$('#rolelistdiv').html().includes(`<button onclick="removerole();">Remove Role</button>`)) {
             $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button onclick="removerole();">Remove Role</button>`)
         }
