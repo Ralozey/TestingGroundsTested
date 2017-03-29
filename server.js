@@ -142,6 +142,14 @@ function howmanygameservers() {
     return result;
 }
 
+function sendgameinfo(SERVERNAME) {
+    var PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS')
+    for (var i in PLAYERS) {
+        userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i]]);
+    }
+    //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+}
+
 function sanitize(msg) {
     msg = msg.replace(/&/g, "&amp"); //This needs to be replaced first, in order to not mess up the other codes.
     msg = msg.replace(/</g, "&lt;");
@@ -445,7 +453,8 @@ io.sockets.on('connection', function (socket) {
                         gameserverlist[SERVERNAME].set('MOD', false);
                         gameserverlist[SERVERNAME].add('PLAYER', USERNAME);
                         gameserverlist[SERVERNAME].set('HOST', USERNAME);
-                        io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                        sendgameinfo(SERVERNAME);
+                        //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
                         socket.emit(Type.JOINGAME, 'toclient', 'success');
                     }
                     else {
@@ -455,7 +464,8 @@ io.sockets.on('connection', function (socket) {
                                 userlist[IP_USER[IP]].set('POSITION', 'INGAME');
                                 userlist[IP_USER[IP]].set('SERVER', i);
                                 gameserverlist[i].add('PLAYER', USERNAME);
-                                io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
+                                sendgameinfo(SERVERNAME);
+                                //io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
                                 allfull = false;
                                 socket.emit(Type.JOINGAME, 'toclient', 'success');
                                 break;
@@ -468,7 +478,8 @@ io.sockets.on('connection', function (socket) {
                             gameserverlist[SERVERNAME].set('MOD', false);
                             gameserverlist[SERVERNAME].add('PLAYER', USERNAME);
                             gameserverlist[SERVERNAME].set('HOST', USERNAME);
-                            io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                            sendgameinfo(SERVERNAME);
+                            //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
                             socket.emit(Type.JOINGAME, 'toclient', 'success');
                         }
                     }
@@ -500,7 +511,8 @@ io.sockets.on('connection', function (socket) {
         if (IP_USER[IP]) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
             socket.join(SERVERNAME);
-            socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+            sendgameinfo(SERVERNAME);
+            //socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
         }
     });
     socket.on(Type.PONG, function () {
@@ -514,7 +526,8 @@ io.sockets.on('connection', function (socket) {
             case 'removerole':
                 if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
                     gameserverlist[SERVERNAME].remove('ROLE', value1);
-                    io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                    sendgameinfo(SERVERNAME);
+                    //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
                 }
                 break;
             case 'addrole':
@@ -524,14 +537,16 @@ io.sockets.on('connection', function (socket) {
                             if (j != 'name' && j != 'color' && j != 'id') {
                                 if (j == value1) {
                                     gameserverlist[SERVERNAME].add('ROLE', j);
-                                    io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                                    sendgameinfo(SERVERNAME);
+                                    //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
                                 }
                                 else {
                                     for (var k in roles.roles[i][j]) {
                                         if (k != 'name' && k != 'color' && k != 'id') {
                                             if (k == value1) {
                                                 gameserverlist[SERVERNAME].add('ROLE', k);
-                                                io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+                                                sendgameinfo(SERVERNAME);
+                                                //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
 
                                             }
                                         }
