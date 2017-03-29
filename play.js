@@ -161,16 +161,20 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         if (thishost) {
             $('#roleallign').attr('disabled', false);
             $('#rolelist').attr('disabled', false);
+            $('#removerole').attr('disabled', false);
+            $('#addrole').attr('disabled', false);
         }
         else {
             $('#roleallign').attr('disabled', true);
             $('#rolelist').attr('disabled', true);
+            $('#removerole').attr('disabled', true);
+            $('#addrole').attr('disabled', true);
         }
         if (!$('#rolelistdiv').html().includes(`<button onclick="removerole();">Remove Role</button>`)) {
-            $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button onclick="removerole();">Remove Role</button>`)
+            $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button id="removerole" onclick="removerole();">Remove Role</button>`)
         }
         if (!$('#roleselectdiv').html().includes(`<button onclick="addrole();">Add Role</button>`)) {
-            $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button onclick="addrole();">Add Role</button>`)
+            $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button id="addrole" onclick="addrole();">Add Role</button>`)
         }
     }
 });

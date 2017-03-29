@@ -143,7 +143,6 @@ function howmanygameservers() {
 }
 
 function sendgameinfo(SERVERNAME) {
-    console.log(SERVERNAME);
     var PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS');
     for (var i in PLAYERS) {
         userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i]]);
@@ -573,7 +572,18 @@ io.sockets.on('connection', function (socket) {
                 socket.emit(Type.SYSTEM, 'Cannot send an empty message.');
             }
             else if (msg[0] == '/') {
-                //INPUT COMMANDS
+                //COMMANDS
+                var command = msg.split(" ")[0];
+                command = command.slice(1);
+                command = command.toLowerCase();
+
+                var args = msg.split(" ").slice(1);
+                var args = args.join(" ");
+
+                switch (command) {
+                    default:
+                        socket.emit(Type.SYSTEM, 'Unknown Command. Type /help for help.');
+                }
             }
             else {
                 io.sockets.in(SERVERNAME).emit(Type.MSG, `${IP_USER[IP]}: ${msg}`, 'msg');
