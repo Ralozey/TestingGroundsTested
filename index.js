@@ -140,7 +140,6 @@ socket.on(Type.LOGINDEX, function (to, username, value) {
                 /*$('#error').html('The Login was successful! You are being redirected!');
                 $('#error').css('display', 'block');
                 $('#send').attr('disabled', 'disabled');
-                setCookie('username', username);
                 window.setTimeout(function () {
                     document.location.reload();
                 }, 3000);

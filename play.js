@@ -13,16 +13,13 @@ var Type = {
 };
 
 var socket = io.connect({ 'pingInterval': 45000 });
-var thishost = false;
 
 $(document).ready(function () {
     $('#roleallign').change(function () {
-        if (thishost) {
-            var updateselects = updateselect(roles, $("#roleallign option:selected").attr("id"));
-            $('#roleselect').attr('size', updateselects[1]);
-            $('#roleselect').html(updateselects[0]);
-            $('#roleselect').css('display', 'inline');
-        }
+        var updateselects = updateselect(roles, $("#roleallign option:selected").attr("id"));
+        $('#roleselect').attr('size', updateselects[1]);
+        $('#roleselect').html(updateselects[0]);
+        $('#roleselect').css('display', 'inline');
     });
 });
 
@@ -147,10 +144,6 @@ socket.on(Type.PING, function () {
 });
 
 socket.on(Type.GAMEINFO, function (GAMEINFO) {
-    if (GAMEINFO[4] == GAMEINFO[3]) {
-        thishost = true;
-    }
-    else thishost = false;
     if (GAMEINFO[1] == 'LOBBY') {
         $('#playerlist').html(updatelist(GAMEINFO[0]));
         $('#rolelist').html(updaterolelist(GAMEINFO[2]));
@@ -158,19 +151,13 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         $('#roleallign').attr('size', updateoptions[1]);
         $('#roleallign').html(updateoptions[0]);
         $('#roleallign').css('display', 'inline');
-        if (thishost) {
-            $('#roleallign').attr('disabled', false);
-            $('#rolelist').attr('disabled', false);
-            if (!$('#rolelistdiv').html().includes(`<button onclick="removerole();">Remove Role</button>`)) {
-                $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button onclick="removerole();">Remove Role</button>`)
-            }
-            if (!$('#roleselectdiv').html().includes(`<button onclick="addrole();">Add Role</button>`)) {
-                $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button onclick="addrole();">Add Role</button>`)
-            }
+        $('#roleallign').attr('disabled', false);
+        $('#rolelist').attr('disabled', false);
+        if (!$('#rolelistdiv').html().includes(`<button onclick="removerole();">Remove Role</button>`)) {
+            $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button onclick="removerole();">Remove Role</button>`)
         }
-        else {
-            $('#roleallign').attr('disabled', true);
-            $('#rolelist').attr('disabled', true);
+        if (!$('#roleselectdiv').html().includes(`<button onclick="addrole();">Add Role</button>`)) {
+            $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button onclick="addrole();">Add Role</button>`)
         }
     }
 });
