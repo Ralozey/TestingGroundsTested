@@ -4,11 +4,17 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="/jquery-2.1.4.min.js"></script>
     <script src="play.js"></script>
+    <script src="roles.js"></script>
     <link href='https://fonts.googleapis.com/css?family=Merriweather' rel='stylesheet' type='text/css'>
     <link href='play.css' rel='stylesheet' type='text/css'>
     <title>Testing Grounds</title>
     <link rel="icon" href="http://i.imgur.com/6gT3pP9.png">
 </head>
 <body>
-    <ul id="playerlist"></ul>
+    <select id="playerlist" size="6"></select>
+    <div id="chat"><ul id="chatfield"></ul>
+    <input type='text' id='c' onKeyDown='checkKey(event)' /></div>
+    <select id="roleallign"></select>
+    <div id="roleselectdiv"><select id="roleselect"></select></div>
+    <div id="rolelistdiv"><select id="rolelist" size="15"></select></div>
 </body>

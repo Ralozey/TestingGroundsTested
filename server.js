@@ -3,6 +3,8 @@
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
+var pg = require('pg');
+var roles = require('./roles');
 var IP_USER = new Array;
 var userlist = new Array;
 var gameserverlist = new Array;
@@ -26,7 +28,10 @@ var Type = {
     LOGOUT: 3,
     GAMEINFO: 4,
     JOINGAME: 5,
-    JOINPLAY: 6
+    JOINPLAY: 6,
+    LOBBYACTION: 7,
+    MSG: 8,
+    SYSTEM: 9
 };
 
 var PhaseType = {
@@ -35,6 +40,17 @@ var PhaseType = {
 
 ping();
 pingtimer();
+
+/*pg.connect(process.env.DATABASE_URL, function (err, client) {
+    if (err) throw err;
+    console.log('Connected to postgres! Getting schemas...');
+
+    client
+      .query('SELECT table_schema,table_name FROM information_schema.tables;')
+      .on('row', function (row) {
+          console.log(JSON.stringify(row));
+      });
+});*/
 
 //Pinging functions
 function ping() {
@@ -50,17 +66,22 @@ function ping() {
 function checkPing() {
     for (var i in userlist) {
         if (userlist[i].get('PING') == -1) {
-            let IP = userlist[i].get('IP');
-            //Player did not reply after 10 seconds. Disconnected.
-            userlist[i].get('SOCKET').disconnect();
-            console.log(`${IP}(${i}) disconnected. Deleting their User File.`);
-            if (userlist[i].get('POSITION') == 'INGAME') {
-                gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
+            if (userlist[i].get('PINGATTEMPTS') > 3) {
+                let IP = userlist[i].get('IP');
+                //Player did not reply after 3 ping attempts. Disconnecting.
+                userlist[i].get('SOCKET').disconnect();
+                console.log(`${IP}(${i}) disconnected. Deleting their User File.`);
+                if (userlist[i].get('POSITION') == 'INGAME') {
+                    gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
+                }
+                delete IP_USER[IP];
+                delete userlist[i];
             }
-            delete IP_USER[IP];
-            delete userlist[i];
-            console.log(IP_USER);
-            console.log(userlist);
+            else {
+                let pingattempts = userlist[i].get('PINGATTEMPTS');
+                pingattempts++;
+                userlist[i].set('PINGATTEMPTS', pingattempts);
+            }
         }
     }
     setTimeout(ping, 0);
@@ -119,6 +140,16 @@ function howmanygameservers() {
         }
     }
     return result;
+}
+
+function sanitize(msg) {
+    msg = msg.replace(/&/g, "&amp"); //This needs to be replaced first, in order to not mess up the other codes.
+    msg = msg.replace(/</g, "&lt;");
+    msg = msg.replace(/>/g, "&gt;");
+    msg = msg.replace(/\"/g, "&quot;");
+    msg = msg.replace(/\'/g, "&#39;");
+    msg = msg.replace(/:/g, "&#58;");
+    return msg;
 }
 
 
@@ -212,6 +243,7 @@ var server = http.createServer(function (req, res) {
             break;
         case '/lobby.js':
         case '/play.js':
+        case '/roles.js':
             if (IP_USER[IP_REQ]) {
                 fs.readFile(__dirname + path, function (error, data) {
                     if (error) {
@@ -468,12 +500,62 @@ io.sockets.on('connection', function (socket) {
         if (IP_USER[IP]) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
             socket.join(SERVERNAME);
-            socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
+            socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
         }
     });
     socket.on(Type.PONG, function () {
         if (IP_USER[IP]) {
             userlist[IP_USER[IP]].set('PING', userlist[IP_USER[IP]].get('PINGTIME'));
+        }
+    });
+    socket.on(Type.LOBBYACTION, function (action, value1, value2) {
+        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+        switch (action) {
+            case 'removerole':
+                if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                    gameserverlist[SERVERNAME].remove('ROLE', value1);
+                    io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
+                }
+                break;
+            case 'addrole':
+                for (var i in roles.roles) {
+                    for (var j in roles.roles[i]) {
+                        if (j != 'name' && j != 'color' && j != 'id') {
+                            if (j == value1) {
+                                gameserverlist[SERVERNAME].add('ROLE', j);
+                                io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
+                            }
+                            else {
+                                for (var k in roles.roles[i][j]) {
+                                    if (k != 'name' && k != 'color' && k != 'id') {
+                                        if (k == value1) {
+                                            gameserverlist[SERVERNAME].add('ROLE', k);
+                                            io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
+
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
+        }
+    });
+    socket.on(Type.MSG, function (msg) {
+        msg = sanitize(msg);
+        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+        if (msg.length > 200) {
+            socket.emit(Type.SYSTEM, 'Your message was too long.');
+        }
+        else if (msg.trim() == '') {
+            socket.emit(Type.SYSTEM, 'Cannot send an empty message.');
+        }
+        else if (msg[0] == '/') {
+            //INPUT COMMANDS
+        }
+        else {
+            io.sockets.in(SERVERNAME).emit(Type.MSG, `${IP_USER[IP]}: ${msg}`, 'msg');
         }
     });
 });
@@ -487,6 +569,7 @@ class User {
         this.__SOCKETID = '';
         this.__SOCKET = '';
         this.__PING = 0;
+        this.__PINGATTEMPTS = 0;
         this.__PINGTIME = 0;
         this.__IP = '';
     }
@@ -506,6 +589,8 @@ class User {
                 return this.__SOCKET;
             case 'PING':
                 return this.__PING;
+            case 'PINGATTEMPTS':
+                return this.__PINGATTEMPTS;
             case 'PINGTIME':
                 return this.__PINGTIME;
             case 'IP':
@@ -534,6 +619,9 @@ class User {
             case 'PING':
                 this.__PING = value2;
                 return true;
+            case 'PINGATTEMPTS':
+                this.__PINGATTEMPTS = value2;
+                return true;
             case 'PINGTIME':
                 this.__PINGTIME = value2;
                 return true;
@@ -552,8 +640,9 @@ class GameServer {
         this.__MOD = undefined;
         this.__HOST = undefined;
         this.__PLAYERS = new Array;
-        this.__ROLELIST = ['Town Power', 'Godfather'];
+        this.__ROLELIST = ['tpow', 'godfather'];
         this.__PLAYERCOUNT = 0;
+        this.__ROLECOUNT = 2;
         this.__COUNT = COUNT;
     }
     get(value) {
@@ -600,6 +689,12 @@ class GameServer {
                 this.__PLAYERS[this.__PLAYERCOUNT] = value2;
                 this.__PLAYERCOUNT++;
                 break;
+            case 'ROLE':
+                if (this.__ROLECOUNT < 15) {
+                    this.__ROLELIST[this.__ROLECOUNT] = value2;
+                    this.__ROLECOUNT++;
+                    break;
+                }
         }
     }
     remove(value1, value2) {
@@ -607,6 +702,13 @@ class GameServer {
             case 'PLAYER':
                 this.__PLAYERS.splice(this.__PLAYERS.indexOf(value2), 1);
                 this.__PLAYERCOUNT--;
+                break;
+            case 'ROLE':
+                if (this.__ROLECOUNT > 0) {
+                    //this.__ROLELIST.splice(value2 - 1, 1);
+                    this.__ROLELIST.splice(this.__ROLELIST.indexOf(value2), 1);
+                    this.__ROLECOUNT--;
+                }
                 break;
         }
     }

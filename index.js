@@ -6,7 +6,10 @@ var Type = {
     LOGOUT: 3,
     GAMEINFO: 4,
     JOINGAME: 5,
-    JOINPLAY: 6
+    JOINPLAY: 6,
+    LOBBYACTION: 7,
+    MSG: 8,
+    SYSTEM: 9
 };
 
 $(document).ready(function () {
@@ -143,6 +146,7 @@ socket.on(Type.LOGINDEX, function (to, username, value) {
                 }, 3000);
                 break;*/
                 window.location.reload();
+                break;
             case 'error':
                 $('#error').html('Your Username or Password are incorrect. Please check your input!');
                 $('#error').css('display', 'block');

@@ -9,7 +9,10 @@ var Type = {
     LOGOUT: 3,
     GAMEINFO: 4,
     JOINGAME: 5,
-    JOINPLAY: 6
+    JOINPLAY: 6,
+    LOBBYACTION: 7,
+    MSG: 8,
+    SYSTEM: 9
 };
 
 $(document).ready(function () {
