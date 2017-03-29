@@ -465,7 +465,7 @@ io.sockets.on('connection', function (socket) {
                                 userlist[IP_USER[IP]].set('POSITION', 'INGAME');
                                 userlist[IP_USER[IP]].set('SERVER', i);
                                 gameserverlist[i].add('PLAYER', USERNAME);
-                                sendgameinfo(SERVERNAME);
+                                sendgameinfo(i);
                                 //io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
                                 allfull = false;
                                 socket.emit(Type.JOINGAME, 'toclient', 'success');
