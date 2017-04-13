@@ -185,19 +185,72 @@ var server = http.createServer(function (req, res) {
         case '/':
             if (IP_USER[IP_REQ]) {
                 if (userlist[IP_USER[IP_REQ]].get('POSITION') == 'INGAME') {
-                    fs.readFile(__dirname + '/play.html', function (error, data) {
-                        if (error) {
-                            res.writeHead(404);
-                            res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
-                            res.end();
+                    if (gameserverlist[userlist[IP_USER[IP_REQ]].get('SERVER')].get('PHASE') == 'LOBBY') {
+                        fs.readFile(__dirname + '/play.html', function (error, data) {
+                            if (error) {
+                                res.writeHead(404);
+                                res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                                res.end();
+                            }
+                            else {
+                                res.writeHead(200, { "Content-Type": "text/html" });
+                                res.write(data, "utf8");
+                                console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now INGAME on Server ${userlist[IP_USER[IP_REQ]].get('SERVER')}`);
+                                res.end();
+                            }
+                        });
+                    }
+                    else {
+                        let USERNAME = IP_USER[IP_REQ];
+                        let SERVERNAME = userlist[USERNAME].get('SERVER');
+                        userlist[USERNAME].set('POSITION', 'LOBBY');
+                        userlist[USERNAME].set('SERVER', false);
+                        gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
+                        if (gameserverlist[SERVERNAME].get('HOST') == USERNAME) {
+                            if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') < 1) {
+                                console.log(`Server ${SERVERNAME} is empty. Deleting...`);
+                                delete gameserverlist[SERVERNAME];
+                            }
+                            else {
+                                gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[0]);
+                            }
+                        }
+                        try { sendgameinfo(SERVERNAME) } catch (err) { };
+                        console.log(`${IP_REQ}(${USERNAME}) left Server ${SERVERNAME}`);
+                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${USERNAME} has left the game.`);
+                        if (userlist[IP_USER[IP_REQ]].get('MOD')) {
+                            fs.readFile(__dirname + '/lobbyMOD.html', function (error, data) {
+                                if (error) {
+                                    res.writeHead(404);
+                                    res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                                    res.end();
+                                }
+                                else {
+                                    res.writeHead(200, { "Content-Type": "text/html" });
+                                    res.write(data, "utf8");
+                                    userlist[IP_USER[IP_REQ]].set('POSITION', 'LOBBY');
+                                    console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now on LOBBY`);
+                                    res.end();
+                                }
+                            });
                         }
                         else {
-                            res.writeHead(200, { "Content-Type": "text/html" });
-                            res.write(data, "utf8");
-                            console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now INGAME on Server ${userlist[IP_USER[IP_REQ]].get('SERVER')}`);
-                            res.end();
+                            fs.readFile(__dirname + '/lobby.html', function (error, data) {
+                                if (error) {
+                                    res.writeHead(404);
+                                    res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                                    res.end();
+                                }
+                                else {
+                                    res.writeHead(200, { "Content-Type": "text/html" });
+                                    res.write(data, "utf8");
+                                    userlist[IP_USER[IP_REQ]].set('POSITION', 'LOBBY');
+                                    console.log(`${IP_REQ}(${IP_USER[IP_REQ]}) is now on LOBBY`);
+                                    res.end();
+                                }
+                            });
                         }
-                    });
+                    }
                 }
                 else {
                     if (userlist[IP_USER[IP_REQ]].get('MOD')) {
@@ -606,7 +659,7 @@ io.sockets.on('connection', function (socket) {
                                 io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
                             }
                             else {
-                                socket.emit(Type.SYSTEM, `The ammount of selected roles must equal the ammount of participating players. A game must also have more than two players (CURRENTLY DEACTIVATED).`)
+                                socket.emit(Type.SYSTEM, `The amount of selected roles must equal the amount of participating players. A game must also have more than two players (CURRENTLY DEACTIVATED).`)
                             }
                         }
                     }
@@ -656,7 +709,7 @@ io.sockets.on('connection', function (socket) {
                                         }
                                     }
                                     else {
-                                        console.log(`Could not repick host on Server ${SERVERNAME} after 100 Attempts!`);
+                                        console.error(`Could not repick host on Server ${SERVERNAME} after 100 Attempts!`);
                                         io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The Host could not be repicked! Please report this error to an adminstrator.`);
                                         break;
                                     }
