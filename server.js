@@ -603,7 +603,7 @@ io.sockets.on('connection', function (socket) {
                             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
                             if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') > 0 && gameserverlist[SERVERNAME].get('PLAYERCOUNT') == gameserverlist[SERVERNAME].get('ROLELIST').length) {
                                 gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
-                                socket.emit(Type.LOBBYACTION, 'gamestart');
+                                io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
                             }
                         }
                     }
@@ -646,8 +646,8 @@ io.sockets.on('connection', function (socket) {
                                             l++;
                                         }
                                         else {
-                                            gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[RAND]);
                                             userlist[gameserverlist[SERVERNAME].get('HOST')].get('SOCKET').emit(Type.SYSTEM, `You are no longer the host.`);
+                                            gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[RAND]);
                                             io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The host has been repicked.`);
                                             break;
                                         }

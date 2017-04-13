@@ -196,12 +196,14 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
             $('#rolelist').attr('disabled', false);
             $('#removerole').attr('disabled', false);
             $('#addrole').attr('disabled', false);
+            $('#startgame').attr('disabled', false);
         }
         else {
             $('#roleallign').attr('disabled', true);
             $('#rolelist').attr('disabled', true);
             $('#removerole').attr('disabled', true);
             $('#addrole').attr('disabled', true);
+            $('#startgame').attr('disabled', true);
         }
     }
 });
