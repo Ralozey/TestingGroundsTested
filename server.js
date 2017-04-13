@@ -605,6 +605,9 @@ io.sockets.on('connection', function (socket) {
                                 gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
                                 io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
                             }
+                            else {
+                                socket.emit(Type.SYSTEM, `The ammount of selected roles must equal the ammount of participating players. A game must also have more than two players (CURRENTLY DEACTIVATED).`)
+                            }
                         }
                     }
                     break;

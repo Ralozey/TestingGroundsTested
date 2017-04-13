@@ -97,7 +97,7 @@ socket.on(Type.JOINGAME, function (to, back) {
         window.location.reload();
     }
     else {
-        $('#error').html('Recieved wrong message. Did you break something?');
+        $('#error').html('You must select a Gamemode before joining a Lobby!');
         $('#error').css('display', 'block');
         setTimeout(function () { $('#error').css('display', 'none'); }, 5000);
     }

@@ -194,6 +194,7 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         if (thishost) {
             $('#roleallign').attr('disabled', false);
             $('#rolelist').attr('disabled', false);
+            $('#roleselect').attr('disabled', false);
             $('#removerole').attr('disabled', false);
             $('#addrole').attr('disabled', false);
             $('#startgame').attr('disabled', false);
@@ -201,6 +202,7 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         else {
             $('#roleallign').attr('disabled', true);
             $('#rolelist').attr('disabled', true);
+            $('#roleselect').attr('disabled', true);
             $('#removerole').attr('disabled', true);
             $('#addrole').attr('disabled', true);
             $('#startgame').attr('disabled', true);
