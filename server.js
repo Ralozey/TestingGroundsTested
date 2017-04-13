@@ -525,6 +525,7 @@ io.sockets.on('connection', function (socket) {
     socket.on(Type.JOINPLAY, function () {
         if (IP_USER[IP]) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+            io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${IP_USER[IP]} has joined the game.`);
             socket.join(SERVERNAME);
             sendgameinfo(SERVERNAME);
             //socket.emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), IP_USER[IP]]);
@@ -592,6 +593,7 @@ io.sockets.on('connection', function (socket) {
                         try { sendgameinfo(SERVERNAME) } catch (err) { };
                         socket.emit(Type.LOBBYACTION, 'leavecomplete');
                         console.log(`${IP}(${USERNAME}) left Server ${SERVERNAME}`);
+                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${IP_USER[IP]} has left the game.`);
                     }
                     break;
                 case 'startgame':
