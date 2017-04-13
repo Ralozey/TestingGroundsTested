@@ -185,10 +185,10 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         $('#roleallign').attr('size', updateoptions[1]);
         $('#roleallign').html(updateoptions[0]);
         $('#roleallign').css('display', 'inline');
-        if (!$('#rolelistdiv').html().includes(`<button id="removerole" onclick="removerole();">Remove Role</button>`)) {
+        if (!$('#rolelistdiv').html().includes(`<button id="removerole"`)) {
             $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button id="removerole" onclick="removerole();">Remove Role</button>`)
         }
-        if (!$('#roleselectdiv').html().includes(`<button id="addrole" onclick="addrole();">Add Role</button>`)) {
+        if (!$('#roleselectdiv').html().includes(`<button id="addrole"`)) {
             $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button id="addrole" onclick="addrole();">Add Role</button>`)
         }
         if (thishost) {
