@@ -9,7 +9,8 @@ var Type = {
     JOINPLAY: 6,
     LOBBYACTION: 7,
     MSG: 8,
-    SYSTEM: 9
+    SYSTEM: 9,
+    GAMEACTION: 10
 };
 
 $(document).ready(function () {

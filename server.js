@@ -31,11 +31,13 @@ var Type = {
     JOINPLAY: 6,
     LOBBYACTION: 7,
     MSG: 8,
-    SYSTEM: 9
+    SYSTEM: 9,
+    GAMEACTION: 10
 };
 
 var PhaseType = {
-    LOBBY: 0
+    LOBBY: 0,
+    PREPARING: 1
 }
 
 ping();
@@ -63,16 +65,29 @@ function ping() {
     }
     setTimeout(checkPing, 10000);
 }
+
+//DISCONNECT FUNCTION
 function checkPing() {
     for (var i in userlist) {
         if (userlist[i].get('PING') == -1) {
             if (userlist[i].get('PINGATTEMPTS') > 3) {
                 let IP = userlist[i].get('IP');
+                let SERVERNAME = userlist[i].get('SERVER');
                 //Player did not reply after 3 ping attempts. Disconnecting.
                 userlist[i].get('SOCKET').disconnect();
                 console.log(`${IP}(${i}) disconnected. Deleting their User File.`);
                 if (userlist[i].get('POSITION') == 'INGAME') {
-                    gameserverlist[userlist[i].get('SERVER')].remove('PLAYER', i);
+                    gameserverlist[SERVERNAME].remove('PLAYER', i);
+                    if (gameserverlist[SERVERNAME].get('HOST') == i) {
+                        if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') < 1) {
+                            console.log(`Server ${SERVERNAME} is empty. Deleting...`);
+                            delete gameserverlist[SERVERNAME];
+                        }
+                        else {
+                            gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[0]);
+                        }
+                    }
+                    try { sendgameinfo(SERVERNAME) } catch (err) { };
                 }
                 delete IP_USER[IP];
                 delete userlist[i];
@@ -558,6 +573,37 @@ io.sockets.on('connection', function (socket) {
                         }
                     }
                     break;
+                case 'leavelobby':
+                    if (IP_USER[IP]) {
+                        var USERNAME = IP_USER[IP];
+                        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+                        userlist[IP_USER[IP]].set('POSITION', 'LOBBY');
+                        userlist[IP_USER[IP]].set('SERVER', false);
+                        gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
+                        if (gameserverlist[SERVERNAME].get('HOST') == USERNAME) {
+                            if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') < 1) {
+                                console.log(`Server ${SERVERNAME} is empty. Deleting...`);
+                                delete gameserverlist[SERVERNAME];
+                            }
+                            else {
+                                gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[0]);
+                            }
+                        }
+                        try { sendgameinfo(SERVERNAME) } catch (err) { };
+                        socket.emit(Type.LOBBYACTION, 'leavecomplete');
+                        console.log(`${IP}(${USERNAME}) left Server ${SERVERNAME}`);
+                    }
+                    break;
+                case 'startgame':
+                    if (IP_USER[IP]) {
+                        var USERNAME = IP_USER[IP];
+                        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+                        if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') > 0 && gameserverlist[SERVERNAME].get('PLAYERCOUNT') == gameserverlist[SERVERNAME].get('ROLELIST').length) {
+                            gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
+                            socket.emit(Type.LOBBYACTION, 'gamestart');
+                        }
+                    }
+                    break;
             }
         }
     });
@@ -583,10 +629,75 @@ io.sockets.on('connection', function (socket) {
                 switch (command) {
                     default:
                         socket.emit(Type.SYSTEM, 'Unknown Command. Type /help for help.');
+                        break;
+                    case 'repick':
+                        if (gameserverlist[SERVERNAME].get('PHASE') == 'LOBBY') {
+                            gameserverlist[SERVERNAME].add('REPICKCOUNT', 1);
+                            if (gameserverlist[SERVERNAME].get('REPICKCOUNT') >= Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT')/2)) {
+                                let l = 0;
+                                while (true) {
+                                    if (l < 100) {
+                                        let RAND = Math.floor((Math.random() * gameserverlist[SERVERNAME].get('PLAYERCOUNT')));
+                                        if (gameserverlist[SERVERNAME].get('PLAYERS')[RAND] == gameserverlist[SERVERNAME].get('HOST')) {
+                                            l++;
+                                        }
+                                        else {
+                                            gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[RAND]);
+                                            userlist[gameserverlist[SERVERNAME].get('HOST')].get('SOCKET').emit(Type.SYSTEM, `You are no longer the host.`);
+                                            io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The host has been repicked.`);
+                                            break;
+                                        }
+                                    }
+                                    else {
+                                        console.log(`Could not repick host on Server ${SERVERNAME} after 100 Attempts!`);
+                                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The Host could not be repicked! Please report this error to an adminstrator.`);
+                                        break;
+                                    }
+                                }
+                                gameserverlist[SERVERNAME].set('REPICKCOUNT', 0);
+                                sendgameinfo(SERVERNAME);
+                            }
+                            else {
+                                io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT') / 2) - gameserverlist[SERVERNAME].get('REPICKCOUNT')} more votes are needed to repick the host.`);
+                            }
+                        }
+                        break;
                 }
             }
             else {
-                io.sockets.in(SERVERNAME).emit(Type.MSG, `${IP_USER[IP]}: ${msg}`, 'msg');
+                if (gameserverlist[SERVERNAME].get('PHASE') == 'LOBBY') {
+                    io.sockets.in(SERVERNAME).emit(Type.MSG, `${IP_USER[IP]}: ${msg}`, 'msg');
+                }
+                else {
+                    if (userlist[IP_USER[IP]].get('NICKNAME') == '') {
+                        socket.emit(Type.SYSTEM, `Please choose a Name first!`);
+                    }
+                    else {
+                        io.sockets.in(SERVERNAME).emit(Type.MSG, `${userlist[IP_USER[IP]].get('NICKNAME')}: ${msg}`, 'msg');
+                    }
+                }
+            }
+        }
+    });
+    socket.on(Type.GAMEACTION, function (action, value1, value2) {
+        if (IP_USER[IP]) {
+            var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+            switch (action) {
+                case 'setname':
+                    value1 = value1.replace(/\s/g, '');
+                    if (value1.length < 17) {
+                        if (value1 != '' && value1 != ' ') {
+                            userlist[IP_USER[IP]].set('NICKNAME', value1);
+                            io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
+                        }
+                        else {
+                            socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
+                        }
+                    }
+                    else {
+                        socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
+                    }
+                    break;
             }
         }
     });
@@ -676,6 +787,8 @@ class GameServer {
         this.__PLAYERCOUNT = 0;
         this.__ROLECOUNT = 2;
         this.__COUNT = COUNT;
+        this.__TIMER = 0;
+        this.__REPICKCOUNT = 0;
     }
     get(value) {
         switch (value) {
@@ -693,6 +806,10 @@ class GameServer {
                 return this.__PLAYERCOUNT;
             case 'COUNT':
                 return this.__COUNT;
+            case 'TIMER':
+                return this.__TIMER;
+            case 'REPICKCOUNT':
+                return this.__REPICKCOUNT;
             default:
                 return false;
         }
@@ -711,6 +828,12 @@ class GameServer {
             case 'COUNT':
                 this.__COUNT = value2;
                 return true;
+            case 'TIMER':
+                this.__TIMER = value2;
+                return true;
+            case 'REPICKCOUNT':
+                this.__REPICKCOUNT = value2;
+                return true;
             default:
                 return false;
         }
@@ -725,8 +848,10 @@ class GameServer {
                 if (this.__ROLECOUNT < 15) {
                     this.__ROLELIST[this.__ROLECOUNT] = value2;
                     this.__ROLECOUNT++;
-                    break;
                 }
+                break;
+            case 'REPICKCOUNT':
+                this.__REPICKCOUNT = this.__REPICKCOUNT + value2;
         }
     }
     remove(value1, value2) {

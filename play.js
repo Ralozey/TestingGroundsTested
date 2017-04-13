@@ -9,7 +9,8 @@ var Type = {
     JOINPLAY: 6,
     LOBBYACTION: 7,
     MSG: 8,
-    SYSTEM: 9
+    SYSTEM: 9,
+    GAMEACTION: 10
 };
 
 var socket = io.connect({ 'pingInterval': 45000 });
@@ -50,7 +51,15 @@ function addrole() {
     socket.emit(Type.LOBBYACTION, 'addrole', $("#roleselect option:selected").attr("id"), '');
 }
 
-function checkKey(e) {
+function leavelobby() {
+    socket.emit(Type.LOBBYACTION, 'leavelobby', '', '');
+}
+
+function startgame() {
+    socket.emit(Type.LOBBYACTION, 'startgame', '', '');
+}
+
+function checkKeyL(e) {
     if (e.keyCode == 13 && $('#c').val() != '') //Enter
     {
         var msg = $('#c').val();
@@ -63,12 +72,30 @@ function checkKey(e) {
     }
 }
 
-function updatelist(Array) {
+function checkKeyP(e) {
+    if (e.keyCode == 13 && $('#n').val() != '') //Enter
+    {
+        var name = $('#n').val();
+        $('#n').val('');
+        socket.emit(Type.GAMEACTION, 'setname', name, '');
+    }
+    //Limit length
+    if ($('#n').val().length >= 200) {
+        $('#n').val($('#n').val().substring(0, 199));
+    }
+}
+
+function updatelist(Array, Host) {
     var result = '';
     var j = 0;
     for (i in Array) {
         j++;
-        result += `<option id="${j}">${Array[i]}</option>`;
+        if (Array[i] == Host) {
+            result += `<option id="${j}">${Array[i]} HOST</option>`;
+        }
+        else {
+            result += `<option id="${j}">${Array[i]}</option>`;
+        }
     }
     return result;
 }
@@ -152,16 +179,16 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         thishost = false;
     }
     if (GAMEINFO[1] == 'LOBBY') {
-        $('#playerlist').html(updatelist(GAMEINFO[0]));
+        $('#playerlist').html(updatelist(GAMEINFO[0], GAMEINFO[3]));
         $('#rolelist').html(updaterolelist(GAMEINFO[2]));
         let updateoptions = updateoption(roles);
         $('#roleallign').attr('size', updateoptions[1]);
         $('#roleallign').html(updateoptions[0]);
         $('#roleallign').css('display', 'inline');
-        if (!$('#rolelistdiv').html().includes(`<button onclick="removerole();">Remove Role</button>`)) {
+        if (!$('#rolelistdiv').html().includes(`<button id="removerole" onclick="removerole();">Remove Role</button>`)) {
             $('#rolelistdiv').html(`${$('#rolelistdiv').html()}<button id="removerole" onclick="removerole();">Remove Role</button>`)
         }
-        if (!$('#roleselectdiv').html().includes(`<button onclick="addrole();">Add Role</button>`)) {
+        if (!$('#roleselectdiv').html().includes(`<button id="addrole" onclick="addrole();">Add Role</button>`)) {
             $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button id="addrole" onclick="addrole();">Add Role</button>`)
         }
         if (thishost) {
@@ -189,4 +216,17 @@ socket.on(Type.SYSTEM, function (msg) {
 
 socket.on(Type.MSG, function (msg, type) {
     addMessage(msg, type);
+});
+
+socket.on(Type.LOBBYACTION, function (func) {
+    switch (func) {
+        case 'leavecomplete':
+            window.location.reload();
+            break;
+        case 'gamestart':
+            $('#lobbystuff').remove();
+            $('#playerlist').css('display', 'none');
+            $('#generalgame').html(`${$('#generalgame').html()}<div id="preparestuff"><input type='text' id='n' onKeyDown='checkKeyP(event)' /></div>`);
+            break;
+    }
 });
