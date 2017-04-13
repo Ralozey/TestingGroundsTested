@@ -598,11 +598,13 @@ io.sockets.on('connection', function (socket) {
                     break;
                 case 'startgame':
                     if (IP_USER[IP]) {
-                        var USERNAME = IP_USER[IP];
-                        var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
-                        if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') > 0 && gameserverlist[SERVERNAME].get('PLAYERCOUNT') == gameserverlist[SERVERNAME].get('ROLELIST').length) {
-                            gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
-                            socket.emit(Type.LOBBYACTION, 'gamestart');
+                        if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                            var USERNAME = IP_USER[IP];
+                            var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+                            if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') > 0 && gameserverlist[SERVERNAME].get('PLAYERCOUNT') == gameserverlist[SERVERNAME].get('ROLELIST').length) {
+                                gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
+                                socket.emit(Type.LOBBYACTION, 'gamestart');
+                            }
                         }
                     }
                     break;
