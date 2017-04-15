@@ -721,6 +721,7 @@ io.sockets.on('connection', function (socket) {
                                 gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
                                 gameserverlist[SERVERNAME].set('TIMER', 50);
                                 io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
+                                console.log(`A Game started on Server ${SERVERNAME} with ${gameserverlist[SERVERNAME].get('PLAYERCOUNT')}!`)
                                 sendgameinfo(SERVERNAME);
                             }
                             else {
