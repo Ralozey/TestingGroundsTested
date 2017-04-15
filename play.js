@@ -28,7 +28,7 @@ $(document).ready(function () {
         $('#roleselect').html(updateselects[0]);
         $('#roleselect').css('display', 'inline');
     });
-    $('#musicrange').change(function () {
+    $(document).on('input', '#musicrange', function () {
         if ($('#musicrange').val() == 0) {
             mutemusic();
         }

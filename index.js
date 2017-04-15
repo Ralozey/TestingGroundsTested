@@ -47,7 +47,7 @@ $(document).ready(function () {
             }
         }
     });
-    $('#musicrange').change(function () {
+    $(document).on('input', '#musicrange', function () {
         if ($('#musicrange').val() == 0) {
             mutemusic();
         }

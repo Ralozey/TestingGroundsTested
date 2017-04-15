@@ -12,7 +12,7 @@ var gameserverlist = new Array;
 //var session = require('express-session');
 var Server = require('socket.io');
 var request = require('request');
-var MOD_LIST = ['Ralozey'];
+var MOD_LIST = ['Ralozey', 'Jerme'];
 var io = new Server(http, { pingInterval: 5000, pingTimeout: 10000 });
 
 var headers = {
@@ -586,7 +586,6 @@ io.sockets.on('connection', function (socket) {
                         gameserverlist[SERVERNAME].add('PLAYER', USERNAME);
                         gameserverlist[SERVERNAME].set('HOST', USERNAME);
                         sendgameinfo(SERVERNAME);
-                        //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
                         socket.emit(Type.JOINGAME, 'toclient', 'success');
                     }
                     else {
@@ -597,7 +596,6 @@ io.sockets.on('connection', function (socket) {
                                 userlist[IP_USER[IP]].set('SERVER', i);
                                 gameserverlist[i].add('PLAYER', USERNAME);
                                 sendgameinfo(i);
-                                //io.sockets.in(i).emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST')]);
                                 allfull = false;
                                 socket.emit(Type.JOINGAME, 'toclient', 'success');
                                 break;
@@ -611,7 +609,6 @@ io.sockets.on('connection', function (socket) {
                             gameserverlist[SERVERNAME].add('PLAYER', USERNAME);
                             gameserverlist[SERVERNAME].set('HOST', USERNAME);
                             sendgameinfo(SERVERNAME);
-                            //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
                             socket.emit(Type.JOINGAME, 'toclient', 'success');
                         }
                     }

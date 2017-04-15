@@ -23,7 +23,7 @@ $(document).ready(function () {
     $('#serverselect').change(function () {
         console.log(getselectedserver());
     });
-    $('#musicrange').change(function () {
+    $(document).on('input', '#musicrange', function () {
         if ($('#musicrange').val() == 0) {
             mutemusic();
         }
