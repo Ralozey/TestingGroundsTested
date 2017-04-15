@@ -16,16 +16,63 @@ var Type = {
     GAMEACTION: 10
 };
 
+var LobbyMusic = new Audio('Homecoming.mp3');
+LobbyMusic.loop = true;
+
 $(document).ready(function () {
     $('#serverselect').change(function () {
         console.log(getselectedserver());
     });
+    $('#musicrange').change(function () {
+        if ($('#musicrange').val() == 0) {
+            mutemusic();
+        }
+        else {
+            playmusic();
+        }
+        setCookie('volume', ($('#musicrange').val()), 'Sat, 31 Dec 2039 23:59:59 GMT');
+        LobbyMusic.volume = (getCookie('volume') / 100);
+    });
+    if (checkCookie('volume')) {
+        $('#musicrange').val(getCookie('volume'));
+        LobbyMusic.volume = (getCookie('volume') / 100);
+    }
+    if (checkCookie('music')) {
+        if (getCookie('music') == 'on') {
+            $('#music').attr('src', 'music.png');
+            LobbyMusic.play();
+        }
+        else {
+            $('#music').attr('src', 'nomusic.png');
+        }
+    }
+    else {
+        $('#music').attr('src', 'music.png');
+        LobbyMusic.play();
+    }
 });
 
 var socket = io.connect({ 'pingInterval': 45000 });
 
-function setCookie(cname, cvalue) {
-    document.cookie = cname + "=" + cvalue + ";path=/";
+function mutemusic() {
+    $('#music').attr('src', 'nomusic.png');
+    $('#music').attr('onclick', 'playmusic()');
+    setCookie('music', 'off', 'Sat, 31 Dec 2039 23:59:59 GMT');
+    LobbyMusic.pause();
+}
+
+function playmusic() {
+    $('#music').attr('src', 'music.png');
+    $('#music').attr('onclick', 'mutemusic()');
+    setCookie('music', 'on', 'Sat, 31 Dec 2039 23:59:59 GMT');
+    if (LobbyMusic.paused) {
+        LobbyMusic.currentTime = 0;
+        LobbyMusic.play();
+    }
+}
+
+function setCookie(cname, cvalue, expires) {
+    document.cookie = cname + "=" + cvalue + ";expires=" + expires + ";path=/";
 }
 
 function getCookie(cname) {
@@ -60,7 +107,7 @@ function logout() {
 }
 
 function showgamemodes() {
-    $('#mainbox').html('<button onclick="delmainbox();">X</button><select id="gamemodeselect" size="2"><option>Automod</option><option disabled>Modded Game</option></select><button onclick="joinlobby();">Join Lobby</button>\n<h5 id="error"></h5>');
+    $('#mainbox').html('<button onclick="delmainbox();">X</button><select id="gamemodeselect" size="2"><option>Automod</option><option disabled>Modded Game</option></select><button onclick="joinlobby();">Join Lobby</button>\n');
 }
 
 function delmainbox() {
@@ -78,6 +125,11 @@ function joinlobby() {
     var serverselect = serverselect_element.value.trim();
     return serverselect;
 }*/
+
+socket.on('disconnect', function () {
+    $('#error').html('You disconnected from the Server! Please press F5 and login again!');
+    $('#error').css('display', 'block');
+});
 
 socket.on(Type.PING, function () {
     socket.emit(Type.PONG);

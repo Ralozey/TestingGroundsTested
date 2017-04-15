@@ -13,6 +13,9 @@ var Type = {
     GAMEACTION: 10
 };
 
+var LoginMusic = new Audio('Forecasting.mp3');
+LoginMusic.loop = true;
+
 $(document).ready(function () {
     $('#username').keyup(function () {
         $('#send').attr('disabled', false);
@@ -44,9 +47,53 @@ $(document).ready(function () {
             }
         }
     });
+    $('#musicrange').change(function () {
+        if ($('#musicrange').val() == 0) {
+            mutemusic();
+        }
+        else {
+            playmusic();
+        }
+        setCookie('volume', ($('#musicrange').val()), 'Sat, 31 Dec 2039 23:59:59 GMT');
+        LoginMusic.volume = (getCookie('volume') / 100);
+    });
+    if (checkCookie('volume')) {
+        $('#musicrange').val(getCookie('volume'));
+        LoginMusic.volume = (getCookie('volume')/100);
+    }
+    if (checkCookie('music')) {
+        if (getCookie('music') == 'on') {
+            $('#music').attr('src', 'music.png');
+            LoginMusic.play();
+        }
+        else {
+            $('#music').attr('src', 'nomusic.png');
+        }
+    }
+    else {
+        $('#music').attr('src', 'music.png');
+        LoginMusic.play();
+    }
 });
 
 var socket = io.connect({ 'pingInterval': 45000 });
+
+function mutemusic() {
+    $('#music').attr('src', 'nomusic.png');
+    $('#music').attr('onclick', 'playmusic()');
+    setCookie('music', 'off', 'Sat, 31 Dec 2039 23:59:59 GMT');
+    LoginMusic.pause();
+}
+
+function playmusic() {
+    $('#music').attr('src', 'music.png');
+    $('#music').attr('onclick', 'mutemusic()');
+    setCookie('music', 'on', 'Sat, 31 Dec 2039 23:59:59 GMT');
+    if (LoginMusic.paused) {
+        LoginMusic.currentTime = 0;
+        LoginMusic.play();
+    }
+}
 
 function checkName(name) {
     $.ajax({
@@ -100,8 +147,8 @@ function loginindex() {
     socket.emit(Type.LOGINDEX, 'toserver', username, password);
 }
 
-function setCookie(cname, cvalue) {
-    document.cookie = cname + "=" + cvalue + ";path=/";
+function setCookie(cname, cvalue, expires) {
+    document.cookie = cname + "=" + cvalue + ";expires=" + expires + ";path=/";
 }
 
 function getCookie(cname) {

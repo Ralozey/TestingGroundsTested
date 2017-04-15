@@ -10,8 +10,11 @@
     <link rel="icon" href="http://i.imgur.com/6gT3pP9.png">
 </head>
 <body>
+    <input id="musicrange" type="range" min="0" max="100" />
+    <img id="music" onclick="mutemusic()">
     <button onclick="showgamemodes();">Play</button>
     <div id="mainbox"></div>
+    <h5 id="error"></h5>
     <button onclick="logout();">Logout</button>
 </body>
 </html>

@@ -42,6 +42,7 @@ var PhaseType = {
 
 ping();
 pingtimer();
+timer1();
 
 /*pg.connect(process.env.DATABASE_URL, function (err, client) {
     if (err) throw err;
@@ -53,6 +54,25 @@ pingtimer();
           console.log(JSON.stringify(row));
       });
 });*/
+
+//Timer Function
+function timer1() {
+    for (var i in gameserverlist) {
+        if (gameserverlist[i].get('TIMER') > 0) {
+            gameserverlist[i].set('TIMER', (gameserverlist[i].get('TIMER') - 1));
+            var PLAYERS = gameserverlist[i].get('PLAYERS');
+            for (var j in PLAYERS) {
+                userlist[PLAYERS[j]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST'), PLAYERS[j], gameserverlist[i].get('TIMER')]);
+            }
+
+        }
+    }
+    setTimeout(timer2, 1000);
+}
+
+function timer2 () {
+    setTimeout(timer1, 0);
+}
 
 //Pinging functions
 function ping() {
@@ -160,7 +180,7 @@ function howmanygameservers() {
 function sendgameinfo(SERVERNAME) {
     var PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS');
     for (var i in PLAYERS) {
-        userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i]]);
+        userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i], gameserverlist[SERVERNAME].get('TIMER')]);
     }
     //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
 }
@@ -400,6 +420,50 @@ var server = http.createServer(function (req, res) {
                 res.write('empty');
             }
             res.end();
+            break;
+        case '/CalmBeforeTheStorm.mp3':
+        case '/CareFree.mp3':
+        case '/DarkAlley.mp3':
+        case '/DarkHolidays.mp3':
+        case '/GreenMeadows.mp3':
+        case '/Heated.mp3':
+        case '/Homecoming.mp3':
+        case '/Inevitable.mp3':
+        case '/Innocence.mp3':
+        case '/LittleItaly.mp3':
+        case '/Searching.mp3':
+        case '/ShockAndAwe.mp3':
+        case '/Suspicion.mp3':
+        case '/WhatLurksInTheNight.mp3':
+        case '/WhoAmI.mp3':
+        case '/Forecasting.mp3':
+            fs.readFile(__dirname + '/music/' + path, function (error, data) {
+                if (error) {
+                    res.writeHead(404);
+                    res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                    res.end();
+                }
+                else {
+                    res.writeHead(200, { "Content-Type": "text/mp3" });
+                    res.write(data, "utf8");
+                    res.end();
+                }
+            });
+            break;
+        case '/music.png':
+        case '/nomusic.png':
+            fs.readFile(__dirname + '/images/' + path, function (error, data) {
+                if (error) {
+                    res.writeHead(404);
+                    res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                    res.end();
+                }
+                else {
+                    res.writeHead(200, { "Content-Type": "text/png" });
+                    res.write(data, "utf8");
+                    res.end();
+                }
+            });
             break;
         default:
             res.writeHead(404);
@@ -656,7 +720,9 @@ io.sockets.on('connection', function (socket) {
                             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
                             if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') > 0 && gameserverlist[SERVERNAME].get('PLAYERCOUNT') == gameserverlist[SERVERNAME].get('ROLELIST').length) {
                                 gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
+                                gameserverlist[SERVERNAME].set('TIMER', 50);
                                 io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
+                                sendgameinfo(SERVERNAME);
                             }
                             else {
                                 socket.emit(Type.SYSTEM, `The amount of selected roles must equal the amount of participating players. A game must also have more than two players (CURRENTLY DEACTIVATED).`)
@@ -720,6 +786,9 @@ io.sockets.on('connection', function (socket) {
                             else {
                                 io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT') / 2) - gameserverlist[SERVERNAME].get('REPICKCOUNT')} more votes are needed to repick the host.`);
                             }
+                        }
+                        else {
+                            socket.emit(Type.SYSTEM, `This command can only be used in the Lobby!`);
                         }
                         break;
                 }
