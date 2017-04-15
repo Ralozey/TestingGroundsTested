@@ -591,14 +591,16 @@ io.sockets.on('connection', function (socket) {
                     else {
                         var allfull = true;
                         for (var i in gameserverlist) {
-                            if (gameserverlist[i].get('PLAYERCOUNT') < 15 && gameserverlist[i].get('MOD') == false) {
-                                userlist[IP_USER[IP]].set('POSITION', 'INGAME');
-                                userlist[IP_USER[IP]].set('SERVER', i);
-                                gameserverlist[i].add('PLAYER', USERNAME);
-                                sendgameinfo(i);
-                                allfull = false;
-                                socket.emit(Type.JOINGAME, 'toclient', 'success');
-                                break;
+                            if (gameserverlist[i].get('PHASE') == 'LOBBY') {
+                                if (gameserverlist[i].get('PLAYERCOUNT') < 15 && gameserverlist[i].get('MOD') == false) {
+                                    userlist[IP_USER[IP]].set('POSITION', 'INGAME');
+                                    userlist[IP_USER[IP]].set('SERVER', i);
+                                    gameserverlist[i].add('PLAYER', USERNAME);
+                                    sendgameinfo(i);
+                                    allfull = false;
+                                    socket.emit(Type.JOINGAME, 'toclient', 'success');
+                                    break;
+                                }
                             }
                         }
                         if (allfull) {
