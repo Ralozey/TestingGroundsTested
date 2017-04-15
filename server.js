@@ -226,6 +226,8 @@ var server = http.createServer(function (req, res) {
                         userlist[USERNAME].set('POSITION', 'LOBBY');
                         userlist[USERNAME].set('SERVER', false);
                         gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
+                        console.log(`${IP_REQ}(${USERNAME}) left Server ${SERVERNAME}`);
+                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${USERNAME} has left the game.`);
                         if (gameserverlist[SERVERNAME].get('HOST') == USERNAME) {
                             if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') < 1) {
                                 console.log(`Server ${SERVERNAME} is empty. Deleting...`);
@@ -236,8 +238,6 @@ var server = http.createServer(function (req, res) {
                             }
                         }
                         try { sendgameinfo(SERVERNAME) } catch (err) { };
-                        console.log(`${IP_REQ}(${USERNAME}) left Server ${SERVERNAME}`);
-                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${USERNAME} has left the game.`);
                         if (userlist[IP_USER[IP_REQ]].get('MOD')) {
                             fs.readFile(__dirname + '/lobbyMOD.html', function (error, data) {
                                 if (error) {
@@ -721,7 +721,7 @@ io.sockets.on('connection', function (socket) {
                                 gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
                                 gameserverlist[SERVERNAME].set('TIMER', 50);
                                 io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
-                                console.log(`A Game started on Server ${SERVERNAME} with ${gameserverlist[SERVERNAME].get('PLAYERCOUNT')}!`)
+                                console.log(`A Game started on Server ${SERVERNAME} with ${gameserverlist[SERVERNAME].get('PLAYERCOUNT')} Players!`)
                                 sendgameinfo(SERVERNAME);
                             }
                             else {
