@@ -782,7 +782,7 @@ io.sockets.on('connection', function (socket) {
                                 }
                                 for (var i in ROLELIST) {
                                     function notusedrand() {
-                                        let RAND = Math.floor((Math.random() * USEDNUM));
+                                        let RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
                                         if (USED[RAND]) {
                                             notusedrand();
                                         }
@@ -815,7 +815,8 @@ io.sockets.on('connection', function (socket) {
                                                             Counts++;
                                                             if (Counts == RANDO) {
                                                                 let PLAYERRAND = notusedrand();
-                                                                userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
+                                                                console.log(userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]])
+                                                                //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
                                                             }
                                                         }
                                                     }
@@ -841,7 +842,8 @@ io.sockets.on('connection', function (socket) {
                                                                 Counts++;
                                                                 if (Counts == RANDO) {
                                                                     let PLAYERRAND = notusedrand()
-                                                                    userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
+                                                                    userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]]
+                                                                    //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
                                                                 }
                                                             }
                                                         }
@@ -851,7 +853,8 @@ io.sockets.on('connection', function (socket) {
                                                             if (l != 'name' && l != 'color' && l != 'id' && l != 'standard') {
                                                                 if (ROLELIST[i] == l) {
                                                                     let PLAYERRAND = notusedrand()
-                                                                    userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', ROLELIST[i]);
+                                                                    userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]]
+                                                                    //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', ROLELIST[i]);
                                                                 }
                                                             }
                                                         }
