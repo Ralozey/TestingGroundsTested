@@ -16,6 +16,7 @@ var Type = {
 var socket = io.connect({ 'pingInterval': 45000 });
 var thishost = false;
 var phase = 'LOBBY';
+var custom_on = false;
 
 var PregameMusic = new Audio('GreenMeadows.mp3');
 var PreparingMusic = new Audio('WhoAmI.mp3');
@@ -120,6 +121,14 @@ function checkCookie(cname) {
     }
 }
 
+function customon() {
+    socket.emit(Type.LOBBYACTION, 'customon');
+}
+
+function customoff() {
+    socket.emit(Type.LOBBYACTION, 'customoff');
+}
+
 function addMessage(msg, type) {
     //Check if scrolled to bottom.
     var atBottom = (10 + $('#chatfield').scrollTop() + $('#chatfield').prop('offsetHeight') >= $('#chatfield').prop('scrollHeight'));
@@ -202,15 +211,17 @@ function updaterolelist(Array) {
         j++;
         for (var i in roles) {
             for (var j in roles[i]) {
-                if (j != 'name' && j != 'color' && j != 'id') {
+                if (j != 'name' && j != 'color' && j != 'id' && j != 'standard') {
                     if (j == Array[z]) {
                         result += `<option style="color: #${roles[i][j].color}" id="${Array[z]}">${roles[i][j].name}</option>`;
                     }
                     else {
                         for (var k in roles[i][j]) {
-                            if (k != 'name' && k != 'color' && k != 'id') {
-                                if (k == Array[z]) {
-                                    result += `<option style="color: #${roles[i][j][k].color}" id="${Array[z]}">${roles[i][j][k].name}</option>`;
+                            if (roles[i][j].standard || custom_on) {
+                                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                                    if (k == Array[z]) {
+                                        result += `<option style="color: #${roles[i][j][k].color}" id="${Array[z]}">${roles[i][j][k].name}</option>`;
+                                    }
                                 }
                             }
                         }
@@ -240,19 +251,23 @@ function updateselect(Array, id) {
     for (i in Array) {
         if (id == 999) {
             for (k in Array[i]) {
-                if (k != 'name' && k != 'color' && k != 'id') {
-                    j++;
-                    result += `<option style="color: #${Array[i][k].color}" id="${k}">${Array[i][k].name}</option>`;
+                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                    if (Array[i][k].standard || custom_on) {
+                        j++;
+                        result += `<option style="color: #${Array[i][k].color}" id="${k}">${Array[i][k].name}</option>`;
+                    }
                 }
             }
         }
         else if (Array[i].id == id) {
             for (k in Array[i]) {
-                if (k != 'name' && k != 'color' && k != 'id') {
+                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
                     for (l in Array[i][k]) {
-                        if (l != 'name' && l != 'color' && l != 'attributes') {
-                            j++;
-                            result += `<option style="color: #${Array[i][k].color}" id="${l}">${Array[i][k][l].name}</option>`;
+                        if (l != 'name' && l != 'color' && l != 'attributes' && l != 'standard') {
+                            if (Array[i][k][l].standard || custom_on) {
+                                j++;
+                                result += `<option style="color: #${Array[i][k].color}" id="${l}">${Array[i][k][l].name}</option>`;
+                            }
                         }
                     }
                 }
@@ -287,6 +302,18 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
         if (!$('#roleselectdiv').html().includes(`<button id="addrole"`)) {
             $('#roleselectdiv').html(`${$('#roleselectdiv').html()}<button id="addrole" onclick="addrole();">Add Role</button>`)
         }
+        if (GAMEINFO[6] == 'ON') {
+            $('#customroles').css('background-color', 'green');
+            $('#customroles').html('Custom Roles <b>On</b>');
+            $('#customroles').attr('onclick', 'customoff()');
+            custom_on = true;
+        }
+        else {
+            $('#customroles').css('background-color', 'red');
+            $('#customroles').html('Custom Roles <b>Off</b>');
+            $('#customroles').attr('onclick', 'customon()');
+            custom_on = false;
+        }
         if (thishost) {
             $('#roleallign').attr('disabled', false);
             $('#rolelist').attr('disabled', false);
@@ -294,6 +321,7 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
             $('#removerole').attr('disabled', false);
             $('#addrole').attr('disabled', false);
             $('#startgame').attr('disabled', false);
+            $('#customroles').attr('disabled', false);
         }
         else {
             $('#roleallign').attr('disabled', true);
@@ -302,9 +330,26 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
             $('#removerole').attr('disabled', true);
             $('#addrole').attr('disabled', true);
             $('#startgame').attr('disabled', true);
+            $('#customroles').attr('disabled', true);
         }
     }
-    $('#timer').html((GAMEINFO[5])%25);
+    $('#timer').html((GAMEINFO[5]) % 25);
+    if (GAMEINFO[5] < 25 && phase == 'PREPARING1') {
+        phase = 'PREPARING2';
+        for (var j in roles) {
+            for (var k in roles[j]) {
+                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                    for (var l in roles[j][k]) {
+                        if (l != 'name' && l != 'color' && l != 'id' && l != 'standard' && l != 'attributes') {
+                            if (GAMEINFO[7] == l) {
+                                $('#preparestuff').html(`${$('#preparestuff').html()}<div id="Rolediv">Your role is: <div id="Role" style="color: #${roles[j][k][l].color}">${roles[j][k][l].name}</div></div>`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 });
 
 socket.on('connect', function () {
@@ -328,8 +373,40 @@ socket.on(Type.LOBBYACTION, function (func) {
         case 'leavecomplete':
             window.location.reload();
             break;
+        case 'customon':
+            $('#customroles').css('background-color', 'green');
+            $('#customroles').html('Custom Roles <b>On</b>');
+            $('#customroles').attr('onclick', 'customoff()');
+            custom_on = true;
+            var updateselects = updateselect(roles, $("#roleallign option:selected").attr("id"));
+            $('#roleselect').attr('size', updateselects[1]);
+            $('#roleselect').html(updateselects[0]);
+            $('#roleselect').css('display', 'inline');
+            if (thishost) {
+                $('#customroles').attr('disabled', false);
+            }
+            else {
+                $('#customroles').attr('disabled', true);
+            }
+            break;
+        case 'customoff':
+            $('#customroles').css('background-color', 'red');
+            $('#customroles').html('Custom Roles <b>Off</b>');
+            $('#customroles').attr('onclick', 'customon()');
+            custom_on = false;
+            var updateselects = updateselect(roles, $("#roleallign option:selected").attr("id"));
+            $('#roleselect').attr('size', updateselects[1]);
+            $('#roleselect').html(updateselects[0]);
+            $('#roleselect').css('display', 'inline');
+            if (thishost) {
+                $('#customroles').attr('disabled', false);
+            }
+            else {
+                $('#customroles').attr('disabled', true);
+            }
+            break;
         case 'gamestart':
-            phase = 'PREPARING';
+            phase = 'PREPARING1';
             PregameMusic.pause();
             PreparingMusic.play();
             if (getCookie('music') != 'off') {
@@ -342,7 +419,7 @@ socket.on(Type.LOBBYACTION, function (func) {
                 }
             }
             else {
-                setCookie('volume', '0  ', 'Sat, 31 Dec 2039 23:59:59 GMT');
+                setCookie('volume', '0', 'Sat, 31 Dec 2039 23:59:59 GMT');
                 PreparingMusic.volume = 0;
             }
             $('#lobbystuff').remove();

@@ -5,7 +5,8 @@
     JAIL: 'Jail the target.',
     EXECUTE: 'Execute the jailed target.',
     MAFKILL: 'Kill the target as member of the Mafia.',
-    IMMUNE: 'Cannot die to KILL'
+    IMMUNE: 'Cannot die to KILL',
+    ALERT: 'Go on alert at night'
 }
 
 var roles = {
@@ -19,8 +20,18 @@ var roles = {
                 attributes: {
                     JAIL: attributes.JAIL,
                     EXECUTE: attributes.EXECUTE
-                }
-            }
+                },
+                standard: true
+            },
+            'veteran': {
+                name: 'Veteran',
+                color: '00FF00',
+                attributes: {
+                    ALERT: attributes.ALERT,
+                },
+                standard: true
+            },
+            standard: true
         },
         name: 'Town',
         color: '00FF00',
@@ -36,8 +47,10 @@ var roles = {
                 attributes: {
                     MAFKILL: attributes.MAFFKILL,
                     IMMUNE: attributes.IMMUNE
-                }
-            }
+                },
+                standard: true
+            },
+            standard: true
         },
         name: 'Mafia',
         color: 'FF0000',
@@ -49,7 +62,8 @@ var roles = {
             color: 'AFAFAF',
             attributes: {
                 ANY: attributes.ANY
-            }
+            },
+            standard: false
         },
         name: 'Neutral',
         color: 'AFAFAF',

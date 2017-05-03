@@ -62,7 +62,7 @@ function timer1() {
             gameserverlist[i].set('TIMER', (gameserverlist[i].get('TIMER') - 1));
             var PLAYERS = gameserverlist[i].get('PLAYERS');
             for (var j in PLAYERS) {
-                userlist[PLAYERS[j]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST'), PLAYERS[j], gameserverlist[i].get('TIMER')]);
+                userlist[PLAYERS[j]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST'), PLAYERS[j], gameserverlist[i].get('TIMER'), gameserverlist[i].get('CUSTOM'), userlist[PLAYERS[j]].get('ROLE')]);
             }
 
         }
@@ -155,12 +155,12 @@ function createID(LENGTH) {
     return ID;
 }
 
-function createGameServer(PHASE) {
+function createGameServer(PHASE, CUSTOM) {
     var gameservercount = howmanygameservers();
     while (true) {
         var SERVERNAME = createID(7);
         if (gameserverlist[SERVERNAME] == undefined) {
-            gameserverlist[SERVERNAME] = new GameServer(PHASE, gameservercount + 1);
+            gameserverlist[SERVERNAME] = new GameServer(PHASE, gameservercount + 1, CUSTOM);
             return SERVERNAME;
         }
     }
@@ -180,7 +180,7 @@ function howmanygameservers() {
 function sendgameinfo(SERVERNAME) {
     var PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS');
     for (var i in PLAYERS) {
-        userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i], gameserverlist[SERVERNAME].get('TIMER')]);
+        userlist[PLAYERS[i]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST'), PLAYERS[i], gameserverlist[SERVERNAME].get('TIMER'), gameserverlist[SERVERNAME].get('CUSTOM'), userlist[PLAYERS[i]].get('ROLE')]);
     }
     //io.sockets.in(SERVERNAME).emit(Type.GAMEINFO, [gameserverlist[SERVERNAME].get('PLAYERS'), gameserverlist[SERVERNAME].get('PHASE'), gameserverlist[SERVERNAME].get('ROLELIST'), gameserverlist[SERVERNAME].get('HOST')]);
 }
@@ -225,6 +225,7 @@ var server = http.createServer(function (req, res) {
                         let SERVERNAME = userlist[USERNAME].get('SERVER');
                         userlist[USERNAME].set('POSITION', 'LOBBY');
                         userlist[USERNAME].set('SERVER', false);
+                        userlist[USERNAME].set('ROLE', false);
                         gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
                         console.log(`${IP_REQ}(${USERNAME}) left Server ${SERVERNAME}`);
                         io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${USERNAME} has left the game.`);
@@ -579,7 +580,7 @@ io.sockets.on('connection', function (socket) {
                         socket.emit(Type.JOINGAME, 'toclient', 'error');
                     }
                     else if (howmanygameservers() == 0) {
-                        var SERVERNAME = createGameServer('LOBBY');
+                        var SERVERNAME = createGameServer('LOBBY', 'OFF');
                         userlist[IP_USER[IP]].set('POSITION', 'INGAME');
                         userlist[IP_USER[IP]].set('SERVER', SERVERNAME);
                         gameserverlist[SERVERNAME].set('MOD', false);
@@ -604,7 +605,7 @@ io.sockets.on('connection', function (socket) {
                             }
                         }
                         if (allfull) {
-                            var SERVERNAME = createGameServer('LOBBY');
+                            var SERVERNAME = createGameServer('LOBBY', 'OFF');
                             userlist[IP_USER[IP]].set('POSITION', 'INGAME');
                             userlist[IP_USER[IP]].set('SERVER', SERVERNAME);
                             gameserverlist[SERVERNAME].set('MOD', false);
@@ -667,7 +668,7 @@ io.sockets.on('connection', function (socket) {
                     if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
                         for (var i in roles.roles) {
                             for (var j in roles.roles[i]) {
-                                if (j != 'name' && j != 'color' && j != 'id') {
+                                if (j != 'name' && j != 'color' && j != 'id' && j != 'standard') {
                                     if (j == value1) {
                                         gameserverlist[SERVERNAME].add('ROLE', j);
                                         sendgameinfo(SERVERNAME);
@@ -675,7 +676,7 @@ io.sockets.on('connection', function (socket) {
                                     }
                                     else {
                                         for (var k in roles.roles[i][j]) {
-                                            if (k != 'name' && k != 'color' && k != 'id') {
+                                            if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
                                                 if (k == value1) {
                                                     gameserverlist[SERVERNAME].add('ROLE', k);
                                                     sendgameinfo(SERVERNAME);
@@ -696,6 +697,7 @@ io.sockets.on('connection', function (socket) {
                         var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
                         userlist[IP_USER[IP]].set('POSITION', 'LOBBY');
                         userlist[IP_USER[IP]].set('SERVER', false);
+                        userlist[IP_USER[IP]].set('ROLE', false);
                         gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
                         if (gameserverlist[SERVERNAME].get('HOST') == USERNAME) {
                             if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') < 1) {
@@ -712,6 +714,57 @@ io.sockets.on('connection', function (socket) {
                         io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${IP_USER[IP]} has left the game.`);
                     }
                     break;
+                case 'customon':
+                    if (IP_USER[IP]) {
+                        if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                            var USERNAME = IP_USER[IP];
+                            var SERVERNAME = userlist[USERNAME].get('SERVER');
+                            gameserverlist[SERVERNAME].set('CUSTOM', 'ON');
+                            io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'customon');
+                        }
+                    }
+                    break;
+                case 'customoff':
+                    if (IP_USER[IP]) {
+                        if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
+                            let removed = false;
+                            var USERNAME = IP_USER[IP];
+                            var SERVERNAME = userlist[USERNAME].get('SERVER');
+                            gameserverlist[SERVERNAME].set('CUSTOM', 'OFF');
+                            var ROLELIST = gameserverlist[SERVERNAME].get('ROLELIST');
+                            for (var i in ROLELIST) {
+                                for (var j in roles.roles) {
+                                    for (var k in roles.roles[j]) {
+                                        if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                                            if (ROLELIST[i] == k) {
+                                                if (!roles.roles[j][k].standard) {
+                                                    gameserverlist[SERVERNAME].remove('ROLE', k);
+                                                    removed = true;
+                                                }
+                                            }
+                                            else {
+                                                for (var l in roles.roles[j][k]) {
+                                                    if (l != 'name' && l != 'color' && l != 'id' && l != 'standard') {
+                                                        if (ROLELIST[i] == l) {
+                                                            if (!roles.roles[j][k][l].standard) {
+                                                                gameserverlist[SERVERNAME].remove('ROLE', l);
+                                                                removed = true;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'customoff');
+                            if (removed) {
+                                sendgameinfo(SERVERNAME);
+                            }
+                        }
+                    }
+                    break;
                 case 'startgame':
                     if (IP_USER[IP]) {
                         if (gameserverlist[SERVERNAME].get('HOST') == IP_USER[IP]) {
@@ -720,6 +773,94 @@ io.sockets.on('connection', function (socket) {
                             if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') > 0 && gameserverlist[SERVERNAME].get('PLAYERCOUNT') == gameserverlist[SERVERNAME].get('ROLELIST').length) {
                                 gameserverlist[SERVERNAME].set('PHASE', 'PREPARING');
                                 gameserverlist[SERVERNAME].set('TIMER', 50);
+                                let ROLELIST = gameserverlist[SERVERNAME].get('ROLELIST');
+                                let USED = new Array;
+                                let USEDNUM = 0;
+                                for (var i in ROLELIST) {
+                                    USED[i] = false;
+                                    USEDNUM++;
+                                }
+                                for (var i in ROLELIST) {
+                                    function notusedrand() {
+                                        let RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
+                                        if (USED[RAND]) {
+                                            notusedrand();
+                                        }
+                                        else {
+                                            USED[RAND] = true;
+                                            return RAND;
+                                        }
+                                    }
+                                    //If Role in Rolelist == Any
+                                    if (ROLELIST[i] == 'any') {
+                                        let NUMofROLES = 0;
+                                        for (var j in roles.roles) {
+                                            for (var k in roles.roles[j]) {
+                                                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                                                    for (var l in roles.roles[j][k]) {
+                                                        if (l != 'name' && l != 'color' && l != 'id' && l != 'standard' && l != 'attributes') {
+                                                            NUMofROLES++;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        let RANDO = Math.floor((Math.random() * NUMofROLES) + 1);
+                                        let Counts = 0;
+                                        for (var j in roles.roles) {
+                                            for (var k in roles.roles[j]) {
+                                                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                                                    for (var l in roles.roles[j][k]) {
+                                                        if (l != 'name' && l != 'color' && l != 'id' && l != 'standard' && l != 'attributes') {
+                                                            Counts++;
+                                                            if (Counts == RANDO) {
+                                                                let PLAYERRAND = notusedrand();
+                                                                userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        for (var j in roles.roles) {
+                                            for (var k in roles.roles[j]) {
+                                                if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
+                                                    if (ROLELIST[i] == k) {
+                                                        let NUMofROLES = 0;
+                                                        for (var l in roles.roles[j][k]) {
+                                                            if (l != 'name' && l != 'color' && l != 'id' && l != 'standard') {
+                                                                NUMofROLES++;
+                                                            }
+                                                        }
+                                                        let RANDO = Math.floor((Math.random() * NUMofROLES) + 1);
+                                                        let Counts = 0;
+                                                        for (var l in roles.roles[j][k]) {
+                                                            if (l != 'name' && l != 'color' && l != 'id' && l != 'standard') {
+                                                                Counts++;
+                                                                if (Counts == RANDO) {
+                                                                    let PLAYERRAND = notusedrand()
+                                                                    userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    else {
+                                                        for (var l in roles.roles[j][k]) {
+                                                            if (l != 'name' && l != 'color' && l != 'id' && l != 'standard') {
+                                                                if (ROLELIST[i] == l) {
+                                                                    let PLAYERRAND = notusedrand()
+                                                                    userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', ROLELIST[i]);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                                 io.sockets.in(SERVERNAME).emit(Type.LOBBYACTION, 'gamestart');
                                 console.log(`A Game started on Server ${SERVERNAME} with ${gameserverlist[SERVERNAME].get('PLAYERCOUNT')} Players!`)
                                 sendgameinfo(SERVERNAME);
@@ -811,20 +952,35 @@ io.sockets.on('connection', function (socket) {
     socket.on(Type.GAMEACTION, function (action, value1, value2) {
         if (IP_USER[IP]) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
+            let nameused = true;
             switch (action) {
                 case 'setname':
-                    value1 = value1.replace(/\s/g, '');
-                    if (value1.length < 17) {
-                        if (value1 != '' && value1 != ' ') {
-                            userlist[IP_USER[IP]].set('NICKNAME', value1);
-                            io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
-                        }
-                        else {
-                            socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
+                    for (var i in gameserverlist[SERVERNAME].get('PLAYERS')) {
+                        if (userlist[gameserverlist[SERVERNAME].get('PLAYERS')[i]].get('NICKNAME') != value1) {
+                            value1 = value1.replace(/\s/g, '');
+                            if (value1.length < 17) {
+                                if (value1 != '' && value1 != ' ') {
+                                    if (!/^\d+$/.test(value1)) {
+                                        userlist[IP_USER[IP]].set('NICKNAME', value1);
+                                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
+                                    }
+                                    else {
+                                        socket.emit(Type.SYSTEM, `Your Name may not consist of just numbers!`);
+                                    }
+                                }
+                                else {
+                                    socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
+                                }
+                            }
+                            else {
+                                socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
+                            }
+                            nameused = false;
+                            break;
                         }
                     }
-                    else {
-                        socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
+                    if (nameused) {
+                        socket.emit(Type.SYSTEM, `This Name has already been used by someone else! Please choose a different one!`);
                     }
                     break;
             }
@@ -844,6 +1000,7 @@ class User {
         this.__PINGATTEMPTS = 0;
         this.__PINGTIME = 0;
         this.__IP = '';
+        this.__ROLE = false;
     }
     get(value) {
         switch (value) {
@@ -867,6 +1024,8 @@ class User {
                 return this.__PINGTIME;
             case 'IP':
                 return this.__IP;
+            case 'ROLE':
+                return this.__ROLE;
             default:
                 return false;
         }
@@ -900,6 +1059,9 @@ class User {
             case 'IP':
                 this.__IP = value2;
                 return true;
+            case 'ROLE':
+                this.__ROLE = value2;
+                return true;
             default:
                 return false;
         }
@@ -907,7 +1069,7 @@ class User {
 };
 
 class GameServer {
-    constructor(PHASE, COUNT) {
+    constructor(PHASE, COUNT, CUSTOM) {
         this.__PHASE = PHASE;
         this.__MOD = undefined;
         this.__HOST = undefined;
@@ -918,6 +1080,7 @@ class GameServer {
         this.__COUNT = COUNT;
         this.__TIMER = 0;
         this.__REPICKCOUNT = 0;
+        this.__CUSTOM = CUSTOM;
     }
     get(value) {
         switch (value) {
@@ -939,6 +1102,8 @@ class GameServer {
                 return this.__TIMER;
             case 'REPICKCOUNT':
                 return this.__REPICKCOUNT;
+            case 'CUSTOM':
+                return this.__CUSTOM;
             default:
                 return false;
         }
@@ -962,6 +1127,9 @@ class GameServer {
                 return true;
             case 'REPICKCOUNT':
                 this.__REPICKCOUNT = value2;
+                return true;
+            case 'CUSTOM':
+                this.__CUSTOM = value2;
                 return true;
             default:
                 return false;
