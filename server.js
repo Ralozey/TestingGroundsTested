@@ -782,7 +782,7 @@ io.sockets.on('connection', function (socket) {
                                 }
                                 for (var i in ROLELIST) {
                                     function notusedrand() {
-                                        let RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
+                                        let RAND = Math.floor((Math.random() * USEDNUM));
                                         if (USED[RAND]) {
                                             notusedrand();
                                         }
