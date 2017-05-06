@@ -815,7 +815,7 @@ io.sockets.on('connection', function (socket) {
                                                             Counts++;
                                                             if (Counts == RANDO) {
                                                                 let PLAYERRAND = notusedrand();
-                                                                console.log(`PLAYERRAND:${PLAYERRAND}|Players:${gameserverlist[SERVERNAME].get('PLAYERS')}|Player:${gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]}`)
+                                                                console.log(`Player:${userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]]}`)
                                                                 //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
                                                             }
                                                         }
@@ -842,7 +842,7 @@ io.sockets.on('connection', function (socket) {
                                                                 Counts++;
                                                                 if (Counts == RANDO) {
                                                                     let PLAYERRAND = notusedrand()
-                                                                    console.log(`PLAYERRAND:${PLAYERRAND}|Players:${gameserverlist[SERVERNAME].get('PLAYERS')}|Player:${gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]}`)
+                                                                    console.log(`Player:${userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]]}`)
                                                                     //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
                                                                 }
                                                             }
@@ -853,7 +853,7 @@ io.sockets.on('connection', function (socket) {
                                                             if (l != 'name' && l != 'color' && l != 'id' && l != 'standard') {
                                                                 if (ROLELIST[i] == l) {
                                                                     let PLAYERRAND = notusedrand()
-                                                                    console.log(`PLAYERRAND:${PLAYERRAND}|Players:${gameserverlist[SERVERNAME].get('PLAYERS')}|Player:${gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]}`)
+                                                                    console.log(`Player:${userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]]}`)
                                                                     //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', ROLELIST[i]);
                                                                 }
                                                             }
