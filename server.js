@@ -816,8 +816,7 @@ io.sockets.on('connection', function (socket) {
                                                             if (Counts == RANDO) {
                                                                 let PLAYERRAND = notusedrand();
                                                                 let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
-                                                                console.log(`Player:${userlist[PLAYERNAME].get('IP')}`)
-                                                                //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
+                                                                userlist[PLAYERNAME].set('ROLE', l);
                                                             }
                                                         }
                                                     }
@@ -844,8 +843,7 @@ io.sockets.on('connection', function (socket) {
                                                                 if (Counts == RANDO) {
                                                                     let PLAYERRAND = notusedrand()
                                                                     let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
-                                                                    console.log(`Player:${userlist[PLAYERNAME].get('IP')}`)
-                                                                    //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', l);
+                                                                    userlist[PLAYERNAME].set('ROLE', l);
                                                                 }
                                                             }
                                                         }
@@ -856,8 +854,7 @@ io.sockets.on('connection', function (socket) {
                                                                 if (ROLELIST[i] == l) {
                                                                     let PLAYERRAND = notusedrand()
                                                                     let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
-                                                                    console.log(`Player:${userlist[PLAYERNAME].get('IP')}`)
-                                                                    //userlist[gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND]].set('ROLE', ROLELIST[i]);
+                                                                    userlist[PLAYERNAME].set('ROLE', l);
                                                                 }
                                                             }
                                                         }
