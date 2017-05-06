@@ -785,14 +785,17 @@ io.sockets.on('connection', function (socket) {
                                 for (var i in ROLELIST) {
                                     function notusedrand() {
                                         let RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
-                                        console.log('RAND'+RAND)
-                                        if (USED[RAND]) {
-                                            notusedrand();
+                                        while (true) {
+                                            console.log('RAND' + RAND)
+                                            if (USED[RAND]) {
+                                                
+                                            }
+                                            else {
+                                                USED[RAND] = true;
+                                                break;
+                                            }
                                         }
-                                        else {
-                                            USED[RAND] = true;
-                                            return RAND;
-                                        }
+                                        return RAND;
                                     }
                                     //If Role in Rolelist == Any
                                     if (ROLELIST[i] == 'any') {
