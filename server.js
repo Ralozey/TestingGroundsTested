@@ -780,9 +780,12 @@ io.sockets.on('connection', function (socket) {
                                     USED[i] = false;
                                     USEDNUM++;
                                 }
+                                console.log('USEDNUM'+USEDNUM)
+                                console.log('USED:'+USED);
                                 for (var i in ROLELIST) {
                                     function notusedrand() {
                                         let RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
+                                        console.log('RAND'+RAND)
                                         if (USED[RAND]) {
                                             notusedrand();
                                         }
