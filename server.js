@@ -816,6 +816,7 @@ io.sockets.on('connection', function (socket) {
                                                             if (Counts == RANDO) {
                                                                 let PLAYERRAND = notusedrand();
                                                                 let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
+                                                                console.log(PLAYERNAME);
                                                                 userlist[PLAYERNAME].set('ROLE', l);
                                                             }
                                                         }
@@ -843,6 +844,7 @@ io.sockets.on('connection', function (socket) {
                                                                 if (Counts == RANDO) {
                                                                     let PLAYERRAND = notusedrand()
                                                                     let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
+                                                                    console.log(PLAYERNAME);
                                                                     userlist[PLAYERNAME].set('ROLE', l);
                                                                 }
                                                             }
@@ -854,6 +856,7 @@ io.sockets.on('connection', function (socket) {
                                                                 if (ROLELIST[i] == l) {
                                                                     let PLAYERRAND = notusedrand()
                                                                     let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
+                                                                    console.log(PLAYERNAME);
                                                                     userlist[PLAYERNAME].set('ROLE', l);
                                                                 }
                                                             }
