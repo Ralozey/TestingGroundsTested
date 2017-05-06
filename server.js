@@ -994,13 +994,13 @@ io.sockets.on('connection', function (socket) {
             let notused = true;
             switch (action) {
                 case 'setname':
+                    value1 = value1.replace(/\s/g, '');
                     for (var i in gameserverlist[SERVERNAME].get('PLAYERS')) {
                         if (userlist[gameserverlist[SERVERNAME].get('PLAYERS')[i]].get('NICKNAME') == value1) {
                             notused = false;
                         }
                     }
                     if (notused) {
-                        value1 = value1.replace(/\s/g, '');
                         if (value1.length < 17) {
                             if (value1 != '' && value1 != ' ') {
                                 if (!/^\d+$/.test(value1)) {
