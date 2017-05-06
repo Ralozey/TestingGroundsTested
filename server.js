@@ -788,7 +788,7 @@ io.sockets.on('connection', function (socket) {
                                         while (true) {
                                             console.log('RAND' + RAND)
                                             if (USED[RAND]) {
-                                                
+                                                RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
                                             }
                                             else {
                                                 USED[RAND] = true;
