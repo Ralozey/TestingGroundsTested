@@ -40,6 +40,39 @@ var PhaseType = {
     PREPARING: 1
 }
 
+var StandardNames = {
+    0: 'Cotton Mather',
+    1: 'Deodat Lawson',
+    2: 'Edward Bishop',
+    3: 'Giles Corey',
+    4: 'James Bayley',
+    5: 'James Russel',
+    6: 'John Hathorne',
+    7: 'John Proctor',
+    8: 'John Willard',
+    9: 'Jonathan Corwin',
+    10: 'Samuel Parris',
+    11: 'Samuel Sewall',
+    12: 'Thomas Danforth',
+    13: 'William Hobbs',
+    14: 'William Phips',
+    15: 'Abigail Hobbs',
+    16: 'Alice Parker',
+    17: 'Alice Young',
+    18: 'Ann Hibbins',
+    19: 'Ann Putnam',
+    20: 'Ann Sears',
+    21: 'Betty Parris',
+    22: 'Lydia Dustin',
+    23: 'Martha Corey',
+    24: 'Mary Eastey',
+    25: 'Mary Johnson',
+    26: 'Mary Warren',
+    27: 'Sarah Bishop',
+    28: 'Sarah Good',
+    29: 'Sarah Wildes'
+}
+
 ping();
 pingtimer();
 timer1();
@@ -780,13 +813,10 @@ io.sockets.on('connection', function (socket) {
                                     USED[i] = false;
                                     USEDNUM++;
                                 }
-                                console.log('USEDNUM'+USEDNUM)
-                                console.log('USED:'+USED);
                                 for (var i in ROLELIST) {
                                     function notusedrand() {
                                         let RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
                                         while (true) {
-                                            console.log('RAND' + RAND)
                                             if (USED[RAND]) {
                                                 RAND = Math.floor((Math.random() * USEDNUM) + 1) - 1;
                                             }
@@ -822,8 +852,6 @@ io.sockets.on('connection', function (socket) {
                                                             if (Counts == RANDO) {
                                                                 let PLAYERRAND = notusedrand();
                                                                 let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
-                                                                console.log(PLAYERRAND);
-                                                                console.log(PLAYERNAME);
                                                                 userlist[PLAYERNAME].set('ROLE', l);
                                                             }
                                                         }
@@ -851,8 +879,6 @@ io.sockets.on('connection', function (socket) {
                                                                 if (Counts == RANDO) {
                                                                     let PLAYERRAND = notusedrand()
                                                                     let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
-                                                                    console.log(PLAYERRAND);
-                                                                    console.log(PLAYERNAME);
                                                                     userlist[PLAYERNAME].set('ROLE', l);
                                                                 }
                                                             }
@@ -864,8 +890,6 @@ io.sockets.on('connection', function (socket) {
                                                                 if (ROLELIST[i] == l) {
                                                                     let PLAYERRAND = notusedrand()
                                                                     let PLAYERNAME = gameserverlist[SERVERNAME].get('PLAYERS')[PLAYERRAND];
-                                                                    console.log(PLAYERRAND);
-                                                                    console.log(PLAYERNAME);
                                                                     userlist[PLAYERNAME].set('ROLE', l);
                                                                 }
                                                             }
@@ -967,34 +991,35 @@ io.sockets.on('connection', function (socket) {
     socket.on(Type.GAMEACTION, function (action, value1, value2) {
         if (IP_USER[IP]) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
-            let nameused = true;
+            let notused = true;
             switch (action) {
                 case 'setname':
                     for (var i in gameserverlist[SERVERNAME].get('PLAYERS')) {
-                        if (userlist[gameserverlist[SERVERNAME].get('PLAYERS')[i]].get('NICKNAME') != value1) {
-                            value1 = value1.replace(/\s/g, '');
-                            if (value1.length < 17) {
-                                if (value1 != '' && value1 != ' ') {
-                                    if (!/^\d+$/.test(value1)) {
-                                        userlist[IP_USER[IP]].set('NICKNAME', value1);
-                                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
-                                    }
-                                    else {
-                                        socket.emit(Type.SYSTEM, `Your Name may not consist of just numbers!`);
-                                    }
+                        if (userlist[gameserverlist[SERVERNAME].get('PLAYERS')[i]].get('NICKNAME') == value1) {
+                            notused = false;
+                        }
+                    }
+                    if (notused) {
+                        value1 = value1.replace(/\s/g, '');
+                        if (value1.length < 17) {
+                            if (value1 != '' && value1 != ' ') {
+                                if (!/^\d+$/.test(value1)) {
+                                    userlist[IP_USER[IP]].set('NICKNAME', value1);
+                                    io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
                                 }
                                 else {
-                                    socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
+                                    socket.emit(Type.SYSTEM, `Your Name may not consist of just numbers!`);
                                 }
                             }
                             else {
-                                socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
+                                socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
                             }
-                            nameused = false;
-                            break;
+                        }
+                        else {
+                            socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
                         }
                     }
-                    if (nameused) {
+                    else {
                         socket.emit(Type.SYSTEM, `This Name has already been used by someone else! Please choose a different one!`);
                     }
                     break;
