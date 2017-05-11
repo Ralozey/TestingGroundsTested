@@ -20,6 +20,7 @@ var custom_on = false;
 
 var PregameMusic = new Audio('GreenMeadows.mp3');
 var PreparingMusic = new Audio('WhoAmI.mp3');
+var TurnSound = new Audio('Turn.mp3');
 PregameMusic.loop = true;
 
 $(document).ready(function () {
@@ -39,10 +40,12 @@ $(document).ready(function () {
         setCookie('volume', ($('#musicrange').val()), 'Sat, 31 Dec 2039 23:59:59 GMT');
         PregameMusic.volume = (getCookie('volume') / 100);
         PreparingMusic.volume = (getCookie('volume') / 100);
+        TurnSound.volume = (getCookie('volume') / 100);
     });
     if (checkCookie('volume')) {
         $('#musicrange').val(getCookie('volume'));
         PregameMusic.volume = (getCookie('volume') / 100);
+        TurnSound.volume = (getCookie('volume') / 100);
     }
     if (checkCookie('music')) {
         if (getCookie('music') == 'on') {
@@ -51,6 +54,7 @@ $(document).ready(function () {
         }
         else {
             $('#music').attr('src', 'nomusic.png');
+            TurnSound.volume = 0;
         }
     }
     else {
@@ -63,11 +67,13 @@ function mutemusic() {
     $('#music').attr('src', 'nomusic.png');
     $('#music').attr('onclick', 'playmusic()');
     setCookie('music', 'off', 'Sat, 31 Dec 2039 23:59:59 GMT');
+    TurnSound.volume = 0;
     if (phase == 'LOBBY') {
         PregameMusic.pause();
     }
-    else if (phase == 'PREPARING') {
+    else if (phase == 'PREPARING1' || phase == 'PREPARING2') {
         PreparingMusic.volume = 0;
+        console.log('A')
     }
 }
 
@@ -75,13 +81,14 @@ function playmusic() {
     $('#music').attr('src', 'music.png');
     $('#music').attr('onclick', 'mutemusic()');
     setCookie('music', 'on', 'Sat, 31 Dec 2039 23:59:59 GMT');
+    TurnSound.volume = (getCookie('volume') / 100);
     if (phase == 'LOBBY') {
         if (PregameMusic.paused) {
             PregameMusic.currentTime = 0;
             PregameMusic.play();
         }
     }
-    else if (phase == 'PREPARING') {
+    else if (phase == 'PREPARING1' || phase == 'PREPARING2') {
         if (checkCookie('volume')) {
             PreparingMusic.volume = (getCookie('volume')/100);
         }
@@ -336,6 +343,7 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
     $('#timer').html((GAMEINFO[5]) % 25);
     if (GAMEINFO[5] < 25 && phase == 'PREPARING1') {
         phase = 'PREPARING2';
+        $('#n').remove();
         for (var j in roles) {
             for (var k in roles[j]) {
                 if (k != 'name' && k != 'color' && k != 'id' && k != 'standard') {
@@ -350,6 +358,7 @@ socket.on(Type.GAMEINFO, function (GAMEINFO) {
             }
         }
     }
+    console.log(`Timer:${GAMEINFO[5]}, Phase:${GAMEINFO[1]}`)
 });
 
 socket.on('connect', function () {
@@ -366,6 +375,8 @@ socket.on(Type.SYSTEM, function (msg) {
 
 socket.on(Type.MSG, function (msg, type) {
     addMessage(msg, type);
+    TurnSound.currentTime = 0;
+    TurnSound.play();
 });
 
 socket.on(Type.LOBBYACTION, function (func) {
@@ -425,6 +436,9 @@ socket.on(Type.LOBBYACTION, function (func) {
             $('#lobbystuff').remove();
             $('#playerlist').css('display', 'none');
             $('#generalgame').html(`${$('#generalgame').html()}<div id="timer"></div><div id="preparestuff"><input type='text' id='n' onKeyDown='checkKeyP(event)' /></div>`);
+            //Scroll Down
+            var end = $("#chatfield").prop('scrollHeight');
+            $("#chatfield").prop('scrollTop', end);
             break;
     }
 });

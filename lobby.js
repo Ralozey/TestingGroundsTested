@@ -103,7 +103,7 @@ function checkCookie(cname) {
 
 function logout() {
     document.cookie = 'username' + '=; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    socket.emit(Type.LOGOUT, 'toserver');
+    socket.emit(Type.JOINPLAY, 'toserver');
 }
 
 function showgamemodes() {

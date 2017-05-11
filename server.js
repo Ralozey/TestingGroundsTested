@@ -41,36 +41,36 @@ var PhaseType = {
 }
 
 var StandardNames = {
-    0: 'Cotton Mather',
-    1: 'Deodat Lawson',
-    2: 'Edward Bishop',
-    3: 'Giles Corey',
-    4: 'James Bayley',
-    5: 'James Russel',
-    6: 'John Hathorne',
-    7: 'John Proctor',
-    8: 'John Willard',
-    9: 'Jonathan Corwin',
-    10: 'Samuel Parris',
-    11: 'Samuel Sewall',
-    12: 'Thomas Danforth',
-    13: 'William Hobbs',
-    14: 'William Phips',
-    15: 'Abigail Hobbs',
-    16: 'Alice Parker',
-    17: 'Alice Young',
-    18: 'Ann Hibbins',
-    19: 'Ann Putnam',
-    20: 'Ann Sears',
-    21: 'Betty Parris',
-    22: 'Lydia Dustin',
-    23: 'Martha Corey',
-    24: 'Mary Eastey',
-    25: 'Mary Johnson',
-    26: 'Mary Warren',
-    27: 'Sarah Bishop',
-    28: 'Sarah Good',
-    29: 'Sarah Wildes'
+    0: 'CottonMather',
+    1: 'DeodatLawson',
+    2: 'EdwardBishop',
+    3: 'GilesCorey',
+    4: 'JamesBayley',
+    5: 'JamesRussel',
+    6: 'JohnHathorne',
+    7: 'JohnProctor',
+    8: 'JohnWillard',
+    9: 'JonathanCorwin',
+    10: 'SamuelParris',
+    11: 'SamuelSewall',
+    12: 'ThomasDanforth',
+    13: 'WilliamHobbs',
+    14: 'WilliamPhips',
+    15: 'AbigailHobbs',
+    16: 'AliceParker',
+    17: 'AliceYoung',
+    18: 'AnnHibbins',
+    19: 'AnnPutnam',
+    20: 'AnnSears',
+    21: 'BettyParris',
+    22: 'LydiaDustin',
+    23: 'MarthaCorey',
+    24: 'MaryEastey',
+    25: 'MaryJohnson',
+    26: 'MaryWarren',
+    27: 'SarahBishop',
+    28: 'SarahGood',
+    29: 'SarahWildes'
 }
 
 ping();
@@ -98,6 +98,30 @@ function timer1() {
                 userlist[PLAYERS[j]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST'), PLAYERS[j], gameserverlist[i].get('TIMER'), gameserverlist[i].get('CUSTOM'), userlist[PLAYERS[j]].get('ROLE')]);
             }
 
+        }
+        else if (gameserverlist[i].get('PHASE') == 'PREPARING') {
+            gameserverlist[i].set('PHASE', 'DAY1');
+            gameserverlist[i].set('TIMER', 15);
+            let PLAYERS = gameserverlist[i].get('PLAYERS');
+            for (var j in PLAYERS) {
+                if (userlist[PLAYERS[j]].get('NICKNAME') == '') {
+                    while (true) {
+                        let notused = true;
+                        let RAND = Math.floor((Math.random() * 30) + 1) - 1;
+                        let RANDNAME = StandardNames[RAND];
+                        for (var k in PLAYERS) {
+                            if (userlist[PLAYERS[k]].get('NICKNAME') == RANDNAME) {
+                                notused = false;
+                            }
+                        }
+                        if (notused) {
+                            userlist[PLAYERS[j]].set('NICKNAME', RANDNAME);
+                            break;
+                        }
+                    }
+                }
+                userlist[PLAYERS[j]].get('SOCKET').emit(Type.GAMEINFO, [gameserverlist[i].get('PLAYERS'), gameserverlist[i].get('PHASE'), gameserverlist[i].get('ROLELIST'), gameserverlist[i].get('HOST'), PLAYERS[j], gameserverlist[i].get('TIMER'), gameserverlist[i].get('CUSTOM'), userlist[PLAYERS[j]].get('ROLE')]);
+            }
         }
     }
     setTimeout(timer2, 1000);
@@ -259,6 +283,8 @@ var server = http.createServer(function (req, res) {
                         userlist[USERNAME].set('POSITION', 'LOBBY');
                         userlist[USERNAME].set('SERVER', false);
                         userlist[USERNAME].set('ROLE', false);
+                        userlist[USERNAME].set('NICKNAME', '');
+                        userlist[USERNAME].set('REPICKED', false);
                         gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
                         console.log(`${IP_REQ}(${USERNAME}) left Server ${SERVERNAME}`);
                         io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${USERNAME} has left the game.`);
@@ -484,6 +510,22 @@ var server = http.createServer(function (req, res) {
                 }
             });
             break;
+        case '/Crowing.mp3':
+        case '/Haul.mp3':
+        case '/Turn.mp3':
+            fs.readFile(__dirname + '/sounds/' + path, function (error, data) {
+                if (error) {
+                    res.writeHead(404);
+                    res.write("<h1>Oops! This page doesn\'t seem to exist! 404</h1>");
+                    res.end();
+                }
+                else {
+                    res.writeHead(200, { "Content-Type": "text/mp3" });
+                    res.write(data, "utf8");
+                    res.end();
+                }
+            });
+            break;
         case '/music.png':
         case '/nomusic.png':
             fs.readFile(__dirname + '/images/' + path, function (error, data) {
@@ -673,7 +715,7 @@ io.sockets.on('connection', function (socket) {
     };
     setInterval(sendserverlist, 1000);*/
     socket.on(Type.JOINPLAY, function () {
-        if (IP_USER[IP]) {
+        if (IP_USER[IP] && userlist[IP_USER[IP]].get('SERVER')) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
             io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${IP_USER[IP]} has joined the game.`);
             socket.join(SERVERNAME);
@@ -687,7 +729,7 @@ io.sockets.on('connection', function (socket) {
         }
     });
     socket.on(Type.LOBBYACTION, function (action, value1, value2) {
-        if (IP_USER[IP]) {
+        if (IP_USER[IP] && userlist[IP_USER[IP]].get('SERVER')) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
             switch (action) {
                 case 'removerole':
@@ -731,6 +773,8 @@ io.sockets.on('connection', function (socket) {
                         userlist[IP_USER[IP]].set('POSITION', 'LOBBY');
                         userlist[IP_USER[IP]].set('SERVER', false);
                         userlist[IP_USER[IP]].set('ROLE', false);
+                        userlist[IP_USER[IP]].set('NICKNAME', '');
+                        userlist[IP_USER[IP]].set('REPICKED', false);
                         gameserverlist[SERVERNAME].remove('PLAYER', USERNAME);
                         if (gameserverlist[SERVERNAME].get('HOST') == USERNAME) {
                             if (gameserverlist[SERVERNAME].get('PLAYERCOUNT') < 1) {
@@ -914,7 +958,7 @@ io.sockets.on('connection', function (socket) {
         }
     });
     socket.on(Type.MSG, function (msg) {
-        if (IP_USER[IP]) {
+        if (IP_USER[IP] && userlist[IP_USER[IP]].get('SERVER')) {
             msg = sanitize(msg);
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
             if (msg.length > 200) {
@@ -938,33 +982,43 @@ io.sockets.on('connection', function (socket) {
                         break;
                     case 'repick':
                         if (gameserverlist[SERVERNAME].get('PHASE') == 'LOBBY') {
-                            gameserverlist[SERVERNAME].add('REPICKCOUNT', 1);
-                            if (gameserverlist[SERVERNAME].get('REPICKCOUNT') >= Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT')/2)) {
-                                let l = 0;
-                                while (true) {
-                                    if (l < 100) {
-                                        let RAND = Math.floor((Math.random() * gameserverlist[SERVERNAME].get('PLAYERCOUNT')));
-                                        if (gameserverlist[SERVERNAME].get('PLAYERS')[RAND] == gameserverlist[SERVERNAME].get('HOST')) {
-                                            l++;
+                            if (!userlist[IP_USER[IP]].get('REPICKED')) {
+                                gameserverlist[SERVERNAME].add('REPICKCOUNT', 1);
+                                userlist[IP_USER[IP]].set('REPICKED', true);
+                                if (gameserverlist[SERVERNAME].get('REPICKCOUNT') >= Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT') / 2)) {
+                                    let l = 0;
+                                    while (true) {
+                                        if (l < 100) {
+                                            let RAND = Math.floor((Math.random() * gameserverlist[SERVERNAME].get('PLAYERCOUNT')));
+                                            if (gameserverlist[SERVERNAME].get('PLAYERS')[RAND] == gameserverlist[SERVERNAME].get('HOST')) {
+                                                l++;
+                                            }
+                                            else {
+                                                userlist[gameserverlist[SERVERNAME].get('HOST')].get('SOCKET').emit(Type.SYSTEM, `You are no longer the host.`);
+                                                gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[RAND]);
+                                                io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The host has been repicked.`);
+                                                let PLAYERS = gameserverlist[SERVERNAME].get('PLAYERS')
+                                                for (var j in PLAYERS) {
+                                                    userlist[PLAYERS[j]].set('REPICKED', false);
+                                                }
+                                                break;
+                                            }
                                         }
                                         else {
-                                            userlist[gameserverlist[SERVERNAME].get('HOST')].get('SOCKET').emit(Type.SYSTEM, `You are no longer the host.`);
-                                            gameserverlist[SERVERNAME].set('HOST', gameserverlist[SERVERNAME].get('PLAYERS')[RAND]);
-                                            io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The host has been repicked.`);
+                                            console.error(`Could not repick host on Server ${SERVERNAME} after 100 Attempts!`);
+                                            io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The Host could not be repicked! Please report this error to an adminstrator.`);
                                             break;
                                         }
                                     }
-                                    else {
-                                        console.error(`Could not repick host on Server ${SERVERNAME} after 100 Attempts!`);
-                                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `The Host could not be repicked! Please report this error to an adminstrator.`);
-                                        break;
-                                    }
+                                    gameserverlist[SERVERNAME].set('REPICKCOUNT', 0);
+                                    sendgameinfo(SERVERNAME);
                                 }
-                                gameserverlist[SERVERNAME].set('REPICKCOUNT', 0);
-                                sendgameinfo(SERVERNAME);
+                                else {
+                                    io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT') / 2) - gameserverlist[SERVERNAME].get('REPICKCOUNT')} more votes are needed to repick the host.`);
+                                }
                             }
                             else {
-                                io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${Math.ceil(gameserverlist[SERVERNAME].get('PLAYERCOUNT') / 2) - gameserverlist[SERVERNAME].get('REPICKCOUNT')} more votes are needed to repick the host.`);
+                                socket.emit(Type.SYSTEM, `You can not repick the same host twice!`);
                             }
                         }
                         else {
@@ -989,38 +1043,40 @@ io.sockets.on('connection', function (socket) {
         }
     });
     socket.on(Type.GAMEACTION, function (action, value1, value2) {
-        if (IP_USER[IP]) {
+        if (IP_USER[IP] && userlist[IP_USER[IP]].get('SERVER')) {
             var SERVERNAME = userlist[IP_USER[IP]].get('SERVER');
             let notused = true;
             switch (action) {
                 case 'setname':
-                    value1 = value1.replace(/\s/g, '');
-                    for (var i in gameserverlist[SERVERNAME].get('PLAYERS')) {
-                        if (userlist[gameserverlist[SERVERNAME].get('PLAYERS')[i]].get('NICKNAME') == value1) {
-                            notused = false;
+                    if (gameserverlist[SERVERNAME].get('PHASE') == 'PREPARING') {
+                        value1 = value1.replace(/\s/g, '');
+                        for (var i in gameserverlist[SERVERNAME].get('PLAYERS')) {
+                            if (userlist[gameserverlist[SERVERNAME].get('PLAYERS')[i]].get('NICKNAME') == value1) {
+                                notused = false;
+                            }
                         }
-                    }
-                    if (notused) {
-                        if (value1.length < 17) {
-                            if (value1 != '' && value1 != ' ') {
-                                if (!/^\d+$/.test(value1)) {
-                                    userlist[IP_USER[IP]].set('NICKNAME', value1);
-                                    io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
+                        if (notused) {
+                            if (value1.length < 17) {
+                                if (value1 != '' && value1 != ' ') {
+                                    if (!/^\d+$/.test(value1)) {
+                                        userlist[IP_USER[IP]].set('NICKNAME', value1);
+                                        io.sockets.in(SERVERNAME).emit(Type.SYSTEM, `${value1} has joined the Town.`);
+                                    }
+                                    else {
+                                        socket.emit(Type.SYSTEM, `Your Name may not consist of just numbers!`);
+                                    }
                                 }
                                 else {
-                                    socket.emit(Type.SYSTEM, `Your Name may not consist of just numbers!`);
+                                    socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
                                 }
                             }
                             else {
-                                socket.emit(Type.SYSTEM, `Your Name may not be empty!`);
+                                socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
                             }
                         }
                         else {
-                            socket.emit(Type.SYSTEM, `Your Name may not be longer than 16 Characters!`);
+                            socket.emit(Type.SYSTEM, `This Name has already been used by someone else! Please choose a different one!`);
                         }
-                    }
-                    else {
-                        socket.emit(Type.SYSTEM, `This Name has already been used by someone else! Please choose a different one!`);
                     }
                     break;
             }
@@ -1041,6 +1097,7 @@ class User {
         this.__PINGTIME = 0;
         this.__IP = '';
         this.__ROLE = false;
+        this.__REPICKED = false;
     }
     get(value) {
         switch (value) {
@@ -1066,6 +1123,8 @@ class User {
                 return this.__IP;
             case 'ROLE':
                 return this.__ROLE;
+            case 'REPICKED':
+                return this.__REPICKED;
             default:
                 return false;
         }
@@ -1101,6 +1160,9 @@ class User {
                 return true;
             case 'ROLE':
                 this.__ROLE = value2;
+                return true;
+            case 'REPICKED':
+                this.__REPICKED = value2;
                 return true;
             default:
                 return false;
